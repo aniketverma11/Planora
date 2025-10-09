@@ -406,9 +406,17 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                     {isExpanded ? <ExpandLess /> : <ExpandMore />}
                                                 </IconButton>
                                             )}
-                                            <Box sx={{ flex: 1 }}>
-                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                                                    <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#333' }}>
+                                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
+                                                    <Typography 
+                                                        variant="body1" 
+                                                        sx={{ 
+                                                            fontWeight: 'bold', 
+                                                            color: '#333',
+                                                            lineHeight: 1.2,
+                                                            wordBreak: 'break-word'
+                                                        }}
+                                                    >
                                                         {task.text}
                                                     </Typography>
                                                     {subtasks.length > 0 && (
@@ -423,7 +431,8 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                                     ? '#4caf50' 
                                                                     : '#1976d2',
                                                                 height: '18px',
-                                                                fontSize: '0.6rem'
+                                                                fontSize: '0.6rem',
+                                                                flexShrink: 0
                                                             }}
                                                         />
                                                     )}
@@ -437,6 +446,7 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                                 color: '#f57c00',
                                                                 height: '18px',
                                                                 fontSize: '0.6rem',
+                                                                flexShrink: 0,
                                                                 '& .MuiChip-icon': { 
                                                                     fontSize: '0.7rem',
                                                                     marginLeft: '4px'
@@ -694,8 +704,16 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                         }} />
                                                     </Box>
                                                     <Box sx={{ flex: 1 }}>
-                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                                                            <Typography variant="body2" sx={{ color: '#555', fontWeight: 500 }}>
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
+                                                            <Typography 
+                                                                variant="body2" 
+                                                                sx={{ 
+                                                                    color: '#555', 
+                                                                    fontWeight: 500,
+                                                                    lineHeight: 1.2,
+                                                                    wordBreak: 'break-word'
+                                                                }}
+                                                            >
                                                                 {subtask.text}
                                                             </Typography>
                                                             <Chip 
