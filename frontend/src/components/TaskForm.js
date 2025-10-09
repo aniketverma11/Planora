@@ -12,33 +12,55 @@ import {
   InputLabel,
   OutlinedInput,
 } from '@mui/material';
-import { createTask, updateTask, getTasks } from '../services/api';
+import { createTask, updateTask, getTasks, getUsers } from '../services/api';
 
 const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     status: 'To Do',
+    priority: 'Medium',
     start_date: '',
     due_date: '',
     duration: 1,
     progress: 0,
     parent_task_id: '',
+    assignee_id: '',
     dependencies: [],
   });
   const [tasks, setTasks] = useState([]);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     if (task) {
+      console.log('=== TASKFORM EDIT MODE ===');
+      console.log('Received task:', task);
+      
       setFormData({
         title: task.title || '',
         description: task.description || '',
         status: task.status || 'To Do',
+        priority: task.priority || 'Medium',
         start_date: task.start_date ? new Date(task.start_date).toISOString().split('T')[0] : '',
         due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '',
         duration: task.duration || 1,
-        progress: task.progress,
+        progress: task.progress !== undefined ? task.progress : 0,
         parent_task_id: task.parent_task || '',
+        assignee_id: task.assignee || '',
+        dependencies: task.dependencies || [],
+      });
+      
+      console.log('FormData set to:', {
+        title: task.title || '',
+        description: task.description || '',
+        status: task.status || 'To Do',
+        priority: task.priority || 'Medium',
+        start_date: task.start_date,
+        due_date: task.due_date,
+        duration: task.duration || 1,
+        progress: task.progress !== undefined ? task.progress : 0,
+        parent_task_id: task.parent_task || '',
+        assignee_id: task.assignee || '',
         dependencies: task.dependencies || [],
       });
     } else {
@@ -46,11 +68,13 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
         title: '',
         description: '',
         status: 'To Do',
+        priority: 'Medium',
         start_date: '',
         due_date: '',
         duration: 1,
         progress: 0,
         parent_task_id: parentTaskId || '',
+        assignee_id: '',
         dependencies: [],
       });
     }
@@ -71,8 +95,19 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
         console.error('Failed to fetch tasks:', error);
       }
     };
+    
+    const fetchUsers = async () => {
+      try {
+        const { data } = await getUsers();
+        setUsers(data);
+      } catch (error) {
+        console.error('Failed to fetch users:', error);
+      }
+    };
+    
     if (open) {
         fetchTasks();
+        fetchUsers();
     }
   }, [open, task]);
 
@@ -99,6 +134,13 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
       } else if (submitData.parent_task_id) {
         // Convert to integer if not empty
         submitData.parent_task_id = parseInt(submitData.parent_task_id);
+      }
+      
+      // Handle empty assignee_id
+      if (submitData.assignee_id === '' || submitData.assignee_id === '0' || submitData.assignee_id === 0) {
+        delete submitData.assignee_id;
+      } else if (submitData.assignee_id) {
+        submitData.assignee_id = parseInt(submitData.assignee_id);
       }
       
       // Convert string numbers to integers
@@ -175,6 +217,33 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
             <MenuItem value="To Do">To Do</MenuItem>
             <MenuItem value="In Progress">In Progress</MenuItem>
             <MenuItem value="Done">Done</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Priority</InputLabel>
+          <Select
+            name="priority"
+            value={formData.priority}
+            onChange={handleChange}
+          >
+            <MenuItem value="Low">Low</MenuItem>
+            <MenuItem value="Medium">Medium</MenuItem>
+            <MenuItem value="High">High</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Assignee</InputLabel>
+          <Select
+            name="assignee_id"
+            value={formData.assignee_id}
+            onChange={handleChange}
+          >
+            <MenuItem value="">None</MenuItem>
+            {users.map((user) => (
+              <MenuItem key={user.id} value={user.id}>
+                {user.username}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <TextField

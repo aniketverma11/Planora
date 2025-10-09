@@ -140,6 +140,17 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
 
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
                     <Chip
+                        label={task.priority}
+                        size="small"
+                        sx={{
+                            bgcolor: task.priority === 'High' ? '#fee2e2' : task.priority === 'Medium' ? '#fef3c7' : '#dbeafe',
+                            color: task.priority === 'High' ? '#991b1b' : task.priority === 'Medium' ? '#92400e' : '#1e40af',
+                            fontSize: '0.75rem',
+                            height: '24px',
+                            fontWeight: 600
+                        }}
+                    />
+                    <Chip
                         icon={<CalendarToday sx={{ fontSize: '0.875rem' }} />}
                         label={new Date(task.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         size="small"
@@ -175,7 +186,7 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
                     )}
                 </Box>
 
-                {task.assignee && (
+                {task.assignee_username && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Avatar 
                             sx={{ 
@@ -185,10 +196,10 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
                                 fontSize: '0.75rem'
                             }}
                         >
-                            {task.assignee.charAt(0).toUpperCase()}
+                            {task.assignee_username.charAt(0).toUpperCase()}
                         </Avatar>
                         <Typography variant="caption" sx={{ color: '#64748b' }}>
-                            {task.assignee}
+                            {task.assignee_username}
                         </Typography>
                     </Box>
                 )}

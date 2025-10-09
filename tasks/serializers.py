@@ -5,6 +5,7 @@ class TaskSerializer(serializers.ModelSerializer):
     subtasks = serializers.SerializerMethodField()
     dependencies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     parent_task = serializers.PrimaryKeyRelatedField(read_only=True)
+    assignee_username = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
@@ -14,6 +15,11 @@ class TaskSerializer(serializers.ModelSerializer):
         if obj.subtasks.exists():
             return TaskSerializer(obj.subtasks.all(), many=True).data
         return []
+    
+    def get_assignee_username(self, obj):
+        if obj.assignee:
+            return obj.assignee.username
+        return None
 
 class TaskCreateUpdateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)

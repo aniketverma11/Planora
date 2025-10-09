@@ -91,14 +91,19 @@ const GanttChartView = () => {
                     return {
                         id: task.id,
                         text: task.title || 'Untitled Task',
+                        title: task.title || 'Untitled Task',  // Include both for compatibility
                         start_date: startDate,
+                        due_date: task.due_date || '',
                         duration: Math.max(1, task.duration || 1),
                         progress: Math.max(0, task.progress || 0), // Keep as percentage (0-100)
                         parent: task.parent_task || 0,
+                        parent_task: task.parent_task || 0,  // Include both for compatibility
                         open: true,
                         status: task.status,
                         priority: task.priority,
                         assignee: task.assignee,
+                        assignee_username: task.assignee_username,
+                        description: task.description || '',
                         subtasks: task.subtasks || [],
                         dependencies: task.dependencies || []
                     };
@@ -177,6 +182,7 @@ const Dashboard = () => {
         status: task.status,
         priority: task.priority,
         assignee: task.assignee,
+        assignee_username: task.assignee_username,
         description: task.description,
         dependencies: task.dependencies || []
       }));
@@ -201,21 +207,26 @@ const Dashboard = () => {
   };
 
   const handleEditTask = (task) => {
+    console.log('=== EDIT TASK DEBUG ===');
+    console.log('Original task from Dashboard:', task);
+    
     // Convert formatted task back to API format for TaskForm
     const taskForEdit = {
       id: task.id,
-      title: task.text,
-      description: task.description,
-      status: task.status,
-      start_date: task.start_date,
+      title: task.text || task.title,  // Handle both formats
+      description: task.description || '',
+      status: task.status || 'To Do',
+      priority: task.priority || 'Medium',
+      start_date: task.start_date || '',
       due_date: task.due_date || '',
-      duration: task.duration,
-      progress: task.progress,
-      parent_task: task.parent,
-      priority: task.priority,
-      assignee: task.assignee,
-      dependencies: task.dependencies
+      duration: task.duration || 1,
+      progress: task.progress !== undefined ? task.progress : 0,
+      parent_task: task.parent || task.parent_task || 0,  // Handle both formats
+      assignee: task.assignee || '',  // This is the assignee ID from API
+      dependencies: task.dependencies || []
     };
+    
+    console.log('Converted taskForEdit:', taskForEdit);
     setEditingTask(taskForEdit);
     setTaskFormOpen(true);
     setDetailsDialogOpen(false);
@@ -410,13 +421,30 @@ const Dashboard = () => {
                     sx={{ mb: 2 }}
                   />
                   
-                  {selectedTask.assignee && (
+                  {selectedTask.priority && (
+                    <>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Priority
+                      </Typography>
+                      <Chip 
+                        label={selectedTask.priority}
+                        sx={{ 
+                          mb: 2,
+                          bgcolor: selectedTask.priority === 'High' ? '#fee2e2' : selectedTask.priority === 'Medium' ? '#fef3c7' : '#dbeafe',
+                          color: selectedTask.priority === 'High' ? '#991b1b' : selectedTask.priority === 'Medium' ? '#92400e' : '#1e40af',
+                          fontWeight: 600
+                        }}
+                      />
+                    </>
+                  )}
+                  
+                  {selectedTask.assignee_username && (
                     <>
                       <Typography variant="subtitle2" gutterBottom>
                         Assignee
                       </Typography>
                       <Typography variant="body2" sx={{ mb: 2 }}>
-                        {selectedTask.assignee}
+                        {selectedTask.assignee_username}
                       </Typography>
                     </>
                   )}

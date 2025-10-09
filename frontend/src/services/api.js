@@ -48,6 +48,7 @@ api.interceptors.response.use(
 
 export const login = (credentials) => api.post('users/login/', credentials);
 export const signup = (userData) => api.post('users/signup/', userData);
+export const getUsers = () => api.get('users/');
 
 export const getTasks = () => api.get('tasks/');
 export const getAllTasks = () => api.get('tasks/all_tasks/');

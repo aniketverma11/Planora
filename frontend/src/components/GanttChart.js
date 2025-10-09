@@ -201,7 +201,27 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
     };
 
     const handleEditTask = () => {
-        setEditingTask(menuTask);
+        console.log('=== GANTT EDIT TASK DEBUG ===');
+        console.log('Original menuTask:', menuTask);
+        
+        // Convert Gantt task format to API format for TaskForm
+        const taskForEdit = {
+            id: menuTask.id,
+            title: menuTask.text || menuTask.title,
+            description: menuTask.description || '',
+            status: menuTask.status || 'To Do',
+            priority: menuTask.priority || 'Medium',
+            start_date: menuTask.start_date || '',
+            due_date: menuTask.due_date || '',
+            duration: menuTask.duration || 1,
+            progress: menuTask.progress !== undefined ? menuTask.progress : 0,
+            parent_task: menuTask.parent || menuTask.parent_task || 0,
+            assignee: menuTask.assignee || '',
+            dependencies: menuTask.dependencies || []
+        };
+        
+        console.log('Converted taskForEdit:', taskForEdit);
+        setEditingTask(taskForEdit);
         setTaskFormOpen(true);
         handleActionClose();
     };
@@ -474,11 +494,26 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                     </Typography>
                                                 </Box>
                                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    {task.assignee && (
-                                                        <Typography variant="caption" sx={{ color: '#666' }}>
-                                                            {task.assignee}
-                                                        </Typography>
-                                                    )}
+                                                    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                                                        {task.priority && (
+                                                            <Chip 
+                                                                label={task.priority}
+                                                                size="small"
+                                                                sx={{ 
+                                                                    bgcolor: task.priority === 'High' ? 'rgba(239, 68, 68, 0.2)' : task.priority === 'Medium' ? 'rgba(251, 191, 36, 0.2)' : 'rgba(59, 130, 246, 0.2)',
+                                                                    color: task.priority === 'High' ? '#dc2626' : task.priority === 'Medium' ? '#f59e0b' : '#3b82f6',
+                                                                    height: '20px',
+                                                                    fontSize: '0.65rem',
+                                                                    fontWeight: 600
+                                                                }}
+                                                            />
+                                                        )}
+                                                        {task.assignee_username && (
+                                                            <Typography variant="caption" sx={{ color: '#666', fontSize: '0.7rem' }}>
+                                                                👤 {task.assignee_username}
+                                                            </Typography>
+                                                        )}
+                                                    </Box>
                                                     <Chip 
                                                         label={`${task.duration}d`}
                                                         size="small"
@@ -715,6 +750,19 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                             >
                                                                 {subtask.text}
                                                             </Typography>
+                                                            {subtask.priority && (
+                                                                <Chip 
+                                                                    label={subtask.priority}
+                                                                    size="small"
+                                                                    sx={{ 
+                                                                        height: '16px',
+                                                                        fontSize: '0.55rem',
+                                                                        bgcolor: subtask.priority === 'High' ? 'rgba(239, 68, 68, 0.15)' : subtask.priority === 'Medium' ? 'rgba(251, 191, 36, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+                                                                        color: subtask.priority === 'High' ? '#dc2626' : subtask.priority === 'Medium' ? '#f59e0b' : '#3b82f6',
+                                                                        fontWeight: 600
+                                                                    }}
+                                                                />
+                                                            )}
                                                             <Chip 
                                                                 label={subtask.status}
                                                                 size="small"
@@ -741,6 +789,11 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                                         }
                                                                     }}
                                                                 />
+                                                            )}
+                                                            {subtask.assignee_username && (
+                                                                <Typography variant="caption" sx={{ color: '#666', fontSize: '0.6rem' }}>
+                                                                    👤 {subtask.assignee_username}
+                                                                </Typography>
                                                             )}
                                                         </Box>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
