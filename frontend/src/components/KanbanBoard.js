@@ -34,7 +34,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import axios from 'axios';
 
-const TaskCard = ({ task, onMenuOpen, getSubtaskCount, getCompletedSubtasks }) => {
+const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompletedSubtasks }) => {
     const {
         attributes,
         listeners,
@@ -58,23 +58,26 @@ const TaskCard = ({ task, onMenuOpen, getSubtaskCount, getCompletedSubtasks }) =
             ref={setNodeRef}
             style={style}
             {...attributes}
-            {...listeners}
             sx={{
                 mb: 2,
                 bgcolor: 'white',
                 boxShadow: isDragging 
                     ? '0 8px 16px rgba(0,0,0,0.2)' 
                     : '0 1px 3px rgba(0,0,0,0.1)',
-                cursor: 'grab',
+                cursor: 'pointer',
                 '&:hover': {
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                 },
                 transition: 'box-shadow 0.2s',
                 border: '1px solid #e2e8f0'
             }}
+            onClick={() => onTaskClick(task)}
         >
             <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                <Box 
+                    {...listeners}
+                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}
+                >
                     <Typography 
                         variant="subtitle1" 
                         sx={{ 
@@ -194,7 +197,7 @@ const TaskCard = ({ task, onMenuOpen, getSubtaskCount, getCompletedSubtasks }) =
     );
 };
 
-const KanbanBoard = ({ tasks, onRefresh, onEditTask, onDeleteTask }) => {
+const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }) => {
     const [menuAnchor, setMenuAnchor] = useState(null);
     const [selectedTask, setSelectedTask] = useState(null);
 
@@ -324,6 +327,7 @@ const KanbanBoard = ({ tasks, onRefresh, onEditTask, onDeleteTask }) => {
                                             <TaskCard
                                                 key={task.id}
                                                 task={task}
+                                                onTaskClick={onTaskClick}
                                                 onMenuOpen={handleMenuOpen}
                                                 getSubtaskCount={getSubtaskCount}
                                                 getCompletedSubtasks={getCompletedSubtasks}

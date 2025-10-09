@@ -11,11 +11,29 @@ import {
   Box,
   Menu,
   MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Chip,
+  Grid,
 } from '@mui/material';
-import { ExitToApp, AccountCircle } from '@mui/icons-material';
+import { 
+  ExitToApp, 
+  AccountCircle, 
+  CalendarToday,
+  Timeline,
+  CheckCircle,
+  Add
+} from '@mui/icons-material';
 import TaskList from './TaskList';
 import GanttChart from './GanttChart';
 import KanbanBoard from './KanbanBoard';
+import TaskForm from './TaskForm';
 import TokenExpiryTimer from './TokenExpiryTimer';
 import { getAllTasks, deleteTask } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -141,8 +159,10 @@ const Dashboard = () => {
   const [value, setValue] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
   const [tasks, setTasks] = useState({ data: [] });
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [deletingTask, setDeletingTask] = useState(null);
 
   const fetchTasks = async () => {
     try {
@@ -170,20 +190,42 @@ const Dashboard = () => {
     fetchTasks();
   }, []);
 
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+    setDetailsDialogOpen(true);
+  };
+
+  const handleAddTask = () => {
+    setEditingTask(null);
+    setTaskFormOpen(true);
+  };
+
   const handleEditTask = (task) => {
     setEditingTask(task);
-    // You can open a task form dialog here
+    setTaskFormOpen(true);
+    setDetailsDialogOpen(false);
   };
 
   const handleDeleteTask = async (task) => {
     if (window.confirm(`Delete "${task.text}"?`)) {
       try {
         await deleteTask(task.id);
+        setDetailsDialogOpen(false);
         fetchTasks();
       } catch (error) {
         console.error('Failed to delete task:', error);
       }
     }
+  };
+
+  const handleTaskFormClose = () => {
+    setTaskFormOpen(false);
+    setEditingTask(null);
+    fetchTasks();
+  };
+
+  const getSubtasksForTask = (taskId) => {
+    return tasks.data.filter(task => task.parent === taskId);
   };
 
   const handleUserMenuOpen = (event) => {
@@ -251,16 +293,27 @@ const Dashboard = () => {
         </Toolbar>
       </AppBar>
       <Container maxWidth="xl" sx={{ p: 0 }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2 }}>
           <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
             <Tab label="Ticket View" />
             <Tab label="Gantt Chart View" />
           </Tabs>
+          {value === 0 && (
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={handleAddTask}
+              sx={{ my: 1 }}
+            >
+              Add Task
+            </Button>
+          )}
         </Box>
         <TabPanel value={value} index={0} noPadding>
           <KanbanBoard 
             tasks={tasks} 
             onRefresh={fetchTasks}
+            onTaskClick={handleTaskClick}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
           />
@@ -269,6 +322,145 @@ const Dashboard = () => {
           <GanttChartView />
         </TabPanel>
       </Container>
+
+      {/* Task Details Dialog */}
+      <Dialog 
+        open={detailsDialogOpen} 
+        onClose={() => setDetailsDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        {selectedTask && (
+          <>
+            <DialogTitle sx={{ bgcolor: '#1976d2', color: 'white' }}>
+              <Typography variant="h6">{selectedTask.text}</Typography>
+            </DialogTitle>
+            <DialogContent sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={6}>
+                  <List>
+                    <ListItem>
+                      <ListItemIcon>
+                        <CalendarToday />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Start Date" 
+                        secondary={new Date(selectedTask.start_date).toLocaleDateString()} 
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        <Timeline />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Duration" 
+                        secondary={`${selectedTask.duration} day${selectedTask.duration !== 1 ? 's' : ''}`} 
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemIcon>
+                        <CheckCircle />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary="Progress" 
+                        secondary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                            <Box sx={{ width: 100, height: 8, bgcolor: '#e0e0e0', borderRadius: 4 }}>
+                              <Box 
+                                sx={{ 
+                                  width: `${selectedTask.progress}%`, 
+                                  height: '100%', 
+                                  bgcolor: '#4caf50', 
+                                  borderRadius: 4 
+                                }} 
+                              />
+                            </Box>
+                            <Typography variant="body2">
+                              {selectedTask.progress}%
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    </ListItem>
+                  </List>
+                </Grid>
+                
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                    Status
+                  </Typography>
+                  <Chip 
+                    label={selectedTask.status}
+                    color={selectedTask.status === 'Done' ? 'success' : selectedTask.status === 'In Progress' ? 'warning' : 'default'}
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  {selectedTask.assignee && (
+                    <>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Assignee
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2 }}>
+                        {selectedTask.assignee}
+                      </Typography>
+                    </>
+                  )}
+                  
+                  {selectedTask.description && (
+                    <>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Description
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {selectedTask.description}
+                      </Typography>
+                    </>
+                  )}
+                </Grid>
+                
+                {!selectedTask.parent && getSubtasksForTask(selectedTask.id).length > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                      Subtasks ({getSubtasksForTask(selectedTask.id).length})
+                    </Typography>
+                    <List>
+                      {getSubtasksForTask(selectedTask.id).map((subtask) => (
+                        <ListItem key={subtask.id}>
+                          <ListItemText 
+                            primary={subtask.text}
+                            secondary={`${subtask.progress}% complete`}
+                          />
+                          <Chip 
+                            label={subtask.status}
+                            size="small"
+                            color={subtask.progress === 100 ? 'success' : subtask.progress > 0 ? 'warning' : 'default'}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Grid>
+                )}
+              </Grid>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setDetailsDialogOpen(false)}>Close</Button>
+              <Button onClick={() => handleEditTask(selectedTask)} variant="contained">
+                Edit
+              </Button>
+              <Button onClick={() => handleDeleteTask(selectedTask)} color="error">
+                Delete
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+
+      {/* Task Form Dialog */}
+      <TaskForm
+        open={taskFormOpen}
+        handleClose={handleTaskFormClose}
+        task={editingTask}
+      />
     </div>
   );
 };
