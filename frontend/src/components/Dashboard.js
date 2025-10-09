@@ -30,7 +30,6 @@ import {
   CheckCircle,
   Add
 } from '@mui/icons-material';
-import TaskList from './TaskList';
 import GanttChart from './GanttChart';
 import KanbanBoard from './KanbanBoard';
 import TaskForm from './TaskForm';
@@ -171,6 +170,7 @@ const Dashboard = () => {
         id: task.id,
         text: task.title || 'Untitled Task',
         start_date: task.start_date || new Date().toISOString().split('T')[0],
+        due_date: task.due_date || '',
         duration: Math.max(1, task.duration || 1),
         progress: Math.max(0, task.progress || 0),
         parent: task.parent_task || 0,
@@ -201,7 +201,22 @@ const Dashboard = () => {
   };
 
   const handleEditTask = (task) => {
-    setEditingTask(task);
+    // Convert formatted task back to API format for TaskForm
+    const taskForEdit = {
+      id: task.id,
+      title: task.text,
+      description: task.description,
+      status: task.status,
+      start_date: task.start_date,
+      due_date: task.due_date || '',
+      duration: task.duration,
+      progress: task.progress,
+      parent_task: task.parent,
+      priority: task.priority,
+      assignee: task.assignee,
+      dependencies: task.dependencies
+    };
+    setEditingTask(taskForEdit);
     setTaskFormOpen(true);
     setDetailsDialogOpen(false);
   };

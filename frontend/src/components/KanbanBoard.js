@@ -233,7 +233,7 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
             try {
                 const token = localStorage.getItem('access_token');
                 await axios.patch(
-                    `http://localhost:8000/api/tasks/${taskId}/`,
+                    `http://localhost:8001/api/tasks/${taskId}/`,
                     { status: newStatus },
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
