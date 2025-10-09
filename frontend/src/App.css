@@ -36,3 +36,53 @@
     transform: rotate(360deg);
   }
 }
+
+/* Gantt Chart Styles */
+.gantt-container {
+  font-family: 'Roboto', sans-serif;
+}
+
+.gantt-timeline-header {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-bottom: 2px solid #334155;
+}
+
+.gantt-task-bar {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.gantt-task-bar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.gantt-subtask-bar {
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.gantt-subtask-bar:hover {
+  opacity: 0.6;
+  transform: translateY(-1px);
+}
+
+.gantt-grid-line {
+  background-color: #334155;
+  opacity: 0.5;
+}
+
+.task-details-dialog .MuiDialog-paper {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .gantt-task-name-column {
+    width: 200px !important;
+  }
+  
+  .gantt-timeline-header {
+    font-size: 0.8rem;
+  }
+}
