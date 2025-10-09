@@ -427,6 +427,23 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                             }}
                                                         />
                                                     )}
+                                                    {task.dependencies && task.dependencies.length > 0 && (
+                                                        <Chip 
+                                                            icon={<Timeline sx={{ fontSize: '0.7rem' }} />}
+                                                            label={`${task.dependencies.length} dep`}
+                                                            size="small"
+                                                            sx={{ 
+                                                                bgcolor: 'rgba(255, 152, 0, 0.1)', 
+                                                                color: '#f57c00',
+                                                                height: '18px',
+                                                                fontSize: '0.6rem',
+                                                                '& .MuiChip-icon': { 
+                                                                    fontSize: '0.7rem',
+                                                                    marginLeft: '4px'
+                                                                }
+                                                            }}
+                                                        />
+                                                    )}
                                                 </Box>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                                                     <LinearProgress 
@@ -691,6 +708,23 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                                     color: subtask.progress === 100 ? '#2e7d32' : subtask.progress > 0 ? '#f57c00' : '#757575'
                                                                 }}
                                                             />
+                                                            {subtask.dependencies && subtask.dependencies.length > 0 && (
+                                                                <Chip 
+                                                                    icon={<Timeline sx={{ fontSize: '0.6rem' }} />}
+                                                                    label={`${subtask.dependencies.length}`}
+                                                                    size="small"
+                                                                    sx={{ 
+                                                                        height: '16px',
+                                                                        fontSize: '0.55rem',
+                                                                        bgcolor: 'rgba(255, 152, 0, 0.1)', 
+                                                                        color: '#f57c00',
+                                                                        '& .MuiChip-icon': { 
+                                                                            fontSize: '0.6rem',
+                                                                            marginLeft: '2px'
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            )}
                                                         </Box>
                                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                             <LinearProgress 
@@ -794,6 +828,111 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                         );
                     })}
                 </Box>
+                
+                {/* Global Dependency Connectors Overlay */}
+                <svg
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: '350px', // Start after task names column
+                        width: 'calc(100% - 350px)',
+                        height: '100%',
+                        pointerEvents: 'none',
+                        zIndex: 5,
+                        overflow: 'visible'
+                    }}
+                >
+                    <defs>
+                        <marker
+                            id="dependency-arrowhead"
+                            markerWidth="10"
+                            markerHeight="10"
+                            refX="9"
+                            refY="5"
+                            orient="auto"
+                        >
+                            <path 
+                                d="M 0 0 L 10 5 L 0 10 z" 
+                                fill="#e65100"
+                                stroke="#e65100"
+                                strokeWidth="0.5"
+                            />
+                        </marker>
+                    </defs>
+                    
+                    {/* Render all dependency connections */}
+                    {tasks.data && tasks.data.map((task, idx) => {
+                        if (!task.dependencies || task.dependencies.length === 0) return null;
+                        
+                        return task.dependencies.map((depId, depIndex) => {
+                            const sourceTask = tasks.data.find(t => t.id === depId);
+                            if (!sourceTask) return null;
+                            
+                            // Calculate row positions (60px per row, starting from header)
+                            const allVisibleTasks = [];
+                            mainTasks.forEach((mt, mtIndex) => {
+                                allVisibleTasks.push({ task: mt, row: mtIndex });
+                                if (expandedTasks.has(mt.id)) {
+                                    const subs = getSubtasksForTask(mt.id);
+                                    subs.forEach((st, stIndex) => {
+                                        allVisibleTasks.push({ task: st, row: mtIndex + stIndex + 0.5 });
+                                    });
+                                }
+                            });
+                            
+                            const sourceIndex = allVisibleTasks.findIndex(t => t.task.id === sourceTask.id);
+                            const targetIndex = allVisibleTasks.findIndex(t => t.task.id === task.id);
+                            
+                            if (sourceIndex === -1 || targetIndex === -1) return null;
+                            
+                            // Calculate positions
+                            const sourcePos = calculateTaskPosition(sourceTask);
+                            const targetPos = calculateTaskPosition(task);
+                            
+                            // Y positions (in pixels from top of scrollable area)
+                            const sourceY = sourceIndex * 60 + 110 + 30; // 110px headers + 30px center of task
+                            const targetY = targetIndex * 60 + 110 + 30;
+                            
+                            // X positions (percentages within timeline area)
+                            const sourceX = parseFloat(sourcePos.left) + parseFloat(sourcePos.width);
+                            const targetX = parseFloat(targetPos.left);
+                            
+                            // Create path with right angles
+                            const horizontalGap = 2; // % gap from task end/start
+                            const path = `
+                                M ${sourceX}% ${sourceY}
+                                L ${sourceX + horizontalGap}% ${sourceY}
+                                L ${sourceX + horizontalGap}% ${targetY}
+                                L ${targetX - horizontalGap}% ${targetY}
+                                L ${targetX}% ${targetY}
+                            `;
+                            
+                            return (
+                                <g key={`dep-${depId}-${task.id}-${depIndex}`}>
+                                    {/* White outline for better visibility */}
+                                    <path
+                                        d={path}
+                                        stroke="white"
+                                        strokeWidth="4"
+                                        fill="none"
+                                        opacity="0.7"
+                                    />
+                                    {/* Main dependency line */}
+                                    <path
+                                        d={path}
+                                        stroke="#e65100"
+                                        strokeWidth="2.5"
+                                        fill="none"
+                                        markerEnd="url(#dependency-arrowhead)"
+                                        style={{
+                                            filter: 'drop-shadow(0px 2px 3px rgba(0,0,0,0.25))'
+                                        }}
+                                    />
+                                </g>
+                            );
+                        });
+                    })}
+                </svg>
             </Paper>
 
             {/* Task Details Dialog */}
@@ -895,6 +1034,57 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                     No subtasks for this task
                                                 </Typography>
                                             )}
+                                        </List>
+                                    </Grid>
+                                )}
+                                
+                                {/* Dependencies Section */}
+                                {selectedTask.dependencies && selectedTask.dependencies.length > 0 && (
+                                    <Grid item xs={12}>
+                                        <Divider sx={{ my: 2 }} />
+                                        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Timeline />
+                                            Dependencies
+                                        </Typography>
+                                        <List>
+                                            {selectedTask.dependencies.map((depId) => {
+                                                const depTask = tasks.data.find(t => t.id === depId);
+                                                if (!depTask) return null;
+                                                return (
+                                                    <ListItem 
+                                                        key={depId} 
+                                                        sx={{ 
+                                                            pl: 0,
+                                                            bgcolor: 'rgba(255, 152, 0, 0.05)',
+                                                            borderRadius: 1,
+                                                            mb: 1
+                                                        }}
+                                                    >
+                                                        <ListItemIcon>
+                                                            <Timeline sx={{ color: '#f57c00' }} />
+                                                        </ListItemIcon>
+                                                        <ListItemText 
+                                                            primary={`Depends on: ${depTask.text}`}
+                                                            secondary={
+                                                                <Box>
+                                                                    <Typography variant="caption" display="block">
+                                                                        {depTask.status} - {depTask.progress}% complete
+                                                                    </Typography>
+                                                                    <Chip 
+                                                                        label={depTask.progress === 100 ? 'Completed' : 'In Progress'}
+                                                                        size="small"
+                                                                        sx={{
+                                                                            bgcolor: depTask.progress === 100 ? '#e8f5e8' : '#fff3e0',
+                                                                            color: depTask.progress === 100 ? '#2e7d32' : '#f57c00',
+                                                                            mt: 0.5
+                                                                        }}
+                                                                    />
+                                                                </Box>
+                                                            }
+                                                        />
+                                                    </ListItem>
+                                                );
+                                            })}
                                         </List>
                                     </Grid>
                                 )}

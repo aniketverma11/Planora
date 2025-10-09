@@ -83,7 +83,8 @@ const GanttChartView = () => {
                         status: task.status,
                         priority: task.priority,
                         assignee: task.assignee,
-                        subtasks: task.subtasks || []
+                        subtasks: task.subtasks || [],
+                        dependencies: task.dependencies || []
                     };
                 });
 
