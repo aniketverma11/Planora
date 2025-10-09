@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'users',
     'tasks',
     'drf_yasg',
+    'import_export'
 ]
 
 MIDDLEWARE = [
