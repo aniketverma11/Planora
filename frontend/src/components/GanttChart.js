@@ -248,10 +248,10 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
             height: '100%', 
             bgcolor: '#f5f5f5', 
             color: '#333', 
-            p: 2,
+            p: 0,
             overflow: 'auto'
         }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, px: 2, pt: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Typography variant="h5" sx={{ color: '#333', fontWeight: 'bold' }}>
                         PROJECT MANAGEMENT
@@ -284,11 +284,11 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                 color: '#333', 
                 overflow: 'auto',
                 width: '100%',
-                minWidth: '1200px',
                 minHeight: 'calc(100vh - 160px)',
-                borderRadius: 2,
+                borderRadius: 0,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                border: '1px solid #e0e0e0'
+                border: 'none',
+                mx: 0
             }}>
                 {/* Timeline Header */}
                 <Box sx={{ display: 'flex', borderBottom: '1px solid #334155' }}>
@@ -308,7 +308,7 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                     </Box>
                     
                     {/* Timeline Header */}
-                    <Box sx={{ flex: 1, minWidth: '800px', overflow: 'hidden' }}>
+                    <Box sx={{ flex: 1, overflow: 'hidden' }}>
                         {/* Months */}
                         <Box sx={{ display: 'flex', borderBottom: '1px solid #334155' }}>
                             {months.map((month, index) => (
@@ -517,7 +517,6 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                         flex: 1, 
                                         position: 'relative', 
                                         minHeight: '60px',
-                                        minWidth: '800px',
                                         bgcolor: taskIndex % 2 === 0 ? '#fafafa' : '#ffffff',
                                         display: 'flex',
                                         alignItems: 'center'
@@ -789,7 +788,6 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                 flex: 1, 
                                                 position: 'relative', 
                                                 minHeight: '50px',
-                                                minWidth: '800px',
                                                 bgcolor: '#f8f9fa',
                                                 display: 'flex',
                                                 alignItems: 'center',
