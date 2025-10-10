@@ -35,6 +35,7 @@ import {
   FormatListBulleted,
   FormatListNumbered,
   Code,
+  AttachFile,
 } from '@mui/icons-material';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -43,7 +44,8 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { Link } from '@tiptap/extension-link';
 import './TaskForm.css';
-import { createTask, updateTask, getTasks, getUsers } from '../services/api';
+import { createTask, updateTask, getTasks, getUsers, getTaskDocuments } from '../services/api';
+import DocumentManager from './DocumentManager';
 
 const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
   const [formData, setFormData] = useState({
@@ -61,6 +63,7 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
   });
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
+  const [documents, setDocuments] = useState([]);
 
   // Initialize TipTap editor
   const editor = useEditor({
@@ -162,11 +165,34 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
       }
     };
     
+    const fetchDocuments = async () => {
+      if (task?.id) {
+        try {
+          const { data } = await getTaskDocuments(task.id);
+          setDocuments(data);
+        } catch (error) {
+          console.error('Failed to fetch documents:', error);
+        }
+      }
+    };
+    
     if (open) {
         fetchTasks();
         fetchUsers();
+        fetchDocuments();
     }
   }, [open, task]);
+
+  const handleDocumentsChange = async () => {
+    if (task?.id) {
+      try {
+        const { data } = await getTaskDocuments(task.id);
+        setDocuments(data);
+      } catch (error) {
+        console.error('Failed to refresh documents:', error);
+      }
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -965,6 +991,25 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
                   </Select>
                 </FormControl>
               </Box>
+
+              {/* Documents Section - Only show for existing tasks */}
+              {task?.id && (
+                <>
+                  <Divider sx={{ my: 2.5, borderColor: '#dfe1e6' }} />
+                  
+                  <Box>
+                    <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5, letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                      <AttachFile sx={{ fontSize: 14 }} />
+                      ATTACHMENTS
+                    </Typography>
+                    <DocumentManager
+                      taskId={task.id}
+                      documents={documents}
+                      onDocumentsChange={handleDocumentsChange}
+                    />
+                  </Box>
+                </>
+              )}
             </Box>
           </Grid>
         </Grid>

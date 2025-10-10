@@ -57,4 +57,18 @@ export const createTask = (taskData) => api.post('tasks/', taskData);
 export const updateTask = (taskId, taskData) => api.put(`tasks/${taskId}/`, taskData);
 export const deleteTask = (taskId) => api.delete(`tasks/${taskId}/`);
 
+// Document APIs
+export const uploadDocument = (taskId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.post(`tasks/${taskId}/upload_document/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const getTaskDocuments = (taskId) => api.get(`tasks/${taskId}/documents/`);
+export const deleteDocument = (taskId, documentId) => api.delete(`tasks/${taskId}/delete_document/${documentId}/`);
+
 export default api;

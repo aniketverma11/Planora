@@ -28,13 +28,15 @@ import {
   CalendarToday,
   Timeline,
   CheckCircle,
-  Add
+  Add,
+  AttachFile,
 } from '@mui/icons-material';
 import GanttChart from './GanttChart';
 import KanbanBoard from './KanbanBoard';
 import TaskForm from './TaskForm';
 import TokenExpiryTimer from './TokenExpiryTimer';
 import HtmlContent from './HtmlContent';
+import DocumentManager from './DocumentManager';
 import { getAllTasks, deleteTask } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -185,7 +187,8 @@ const Dashboard = () => {
         assignee: task.assignee,
         assignee_username: task.assignee_username,
         description: task.description,
-        dependencies: task.dependencies || []
+        dependencies: task.dependencies || [],
+        documents: task.documents || []
       }));
       setTasks({ data: formattedTasks });
     } catch (error) {
@@ -607,6 +610,21 @@ const Dashboard = () => {
                         </ListItem>
                       ))}
                     </List>
+                  </Grid>
+                )}
+                
+                {/* Documents/Attachments Section */}
+                {selectedTask.documents && selectedTask.documents.length > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant="h6" gutterBottom sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <AttachFile />
+                      Attachments ({selectedTask.documents.length})
+                    </Typography>
+                    <DocumentManager
+                      taskId={selectedTask.id}
+                      documents={selectedTask.documents}
+                      onDocumentsChange={fetchTasks}
+                    />
                   </Grid>
                 )}
               </Grid>

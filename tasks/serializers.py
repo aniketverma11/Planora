@@ -1,11 +1,41 @@
 from rest_framework import serializers
-from .models import Task
+from .models import Task, TaskDocument
+
+class TaskDocumentSerializer(serializers.ModelSerializer):
+    uploaded_by_username = serializers.SerializerMethodField()
+    formatted_size = serializers.SerializerMethodField()
+    is_image = serializers.SerializerMethodField()
+    is_pdf = serializers.SerializerMethodField()
+    file_extension = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = TaskDocument
+        fields = ['id', 'task', 'file', 'file_name', 'file_size', 'formatted_size', 
+                  'file_type', 'file_extension', 'is_image', 'is_pdf', 
+                  'uploaded_by', 'uploaded_by_username', 'uploaded_at']
+        read_only_fields = ['file_size', 'uploaded_at']
+    
+    def get_uploaded_by_username(self, obj):
+        return obj.uploaded_by.username if obj.uploaded_by else None
+    
+    def get_formatted_size(self, obj):
+        return obj.get_formatted_size()
+    
+    def get_is_image(self, obj):
+        return obj.is_image()
+    
+    def get_is_pdf(self, obj):
+        return obj.is_pdf()
+    
+    def get_file_extension(self, obj):
+        return obj.get_file_extension()
 
 class TaskSerializer(serializers.ModelSerializer):
     subtasks = serializers.SerializerMethodField()
     dependencies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     parent_task = serializers.PrimaryKeyRelatedField(read_only=True)
     assignee_username = serializers.SerializerMethodField()
+    documents = TaskDocumentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Task
