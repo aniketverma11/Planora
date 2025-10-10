@@ -19,8 +19,17 @@ class TaskViewSet(viewsets.ModelViewSet):
         return TaskSerializer
 
     def get_queryset(self):
-        # Return main tasks (not subtasks) by default
-        queryset = Task.objects.filter(parent_task__isnull=True)
+        queryset = Task.objects.all()
+        
+        # Filter by project if project_id is provided
+        project_id = self.request.query_params.get('project_id', None)
+        if project_id:
+            queryset = queryset.filter(project_id=project_id)
+        
+        # Filter to show only main tasks (not subtasks) unless showing all
+        if self.action not in ['all_tasks']:
+            queryset = queryset.filter(parent_task__isnull=True)
+        
         return queryset
     
     @action(detail=True, methods=['get'])
@@ -34,8 +43,15 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def all_tasks(self, request):
         """Get all tasks including subtasks for Gantt chart"""
-        all_tasks = Task.objects.all()
-        serializer = TaskSerializer(all_tasks, many=True)
+        # Get base queryset (without parent_task filter)
+        queryset = Task.objects.all()
+        
+        # Filter by project if project_id is provided
+        project_id = self.request.query_params.get('project_id', None)
+        if project_id:
+            queryset = queryset.filter(project_id=project_id)
+        
+        serializer = TaskSerializer(queryset, many=True)
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])

@@ -65,8 +65,26 @@ export const login = (credentials) => api.post('users/login/', credentials);
 export const signup = (userData) => api.post('users/signup/', userData);
 export const getUsers = () => api.get('users/');
 
-export const getTasks = () => api.get('tasks/');
-export const getAllTasks = () => api.get('tasks/all_tasks/');
+// Project APIs
+export const getProjects = () => api.get('projects/');
+export const getMyProjects = () => api.get('projects/my_projects/');
+export const getProject = (projectId) => api.get(`projects/${projectId}/`);
+export const createProject = (projectData) => api.post('projects/', projectData);
+export const updateProject = (projectId, projectData) => api.put(`projects/${projectId}/`, projectData);
+export const deleteProject = (projectId) => api.delete(`projects/${projectId}/`);
+export const getProjectStats = (projectId) => api.get(`projects/${projectId}/stats/`);
+export const addProjectMember = (projectId, userId) => api.post(`projects/${projectId}/add_member/`, { user_id: userId });
+export const removeProjectMember = (projectId, userId) => api.post(`projects/${projectId}/remove_member/`, { user_id: userId });
+
+// Task APIs
+export const getTasks = (projectId = null) => {
+  const url = projectId ? `tasks/?project_id=${projectId}` : 'tasks/';
+  return api.get(url);
+};
+export const getAllTasks = (projectId = null) => {
+  const url = projectId ? `tasks/all_tasks/?project_id=${projectId}` : 'tasks/all_tasks/';
+  return api.get(url);
+};
 export const getSubTasks = (taskId) => api.get(`tasks/${taskId}/subtasks/`);
 export const createTask = (taskData) => api.post('tasks/', taskData);
 export const updateTask = (taskId, taskData) => api.put(`tasks/${taskId}/`, taskData);

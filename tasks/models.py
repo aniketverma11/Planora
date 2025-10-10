@@ -23,6 +23,7 @@ class Task(models.Model):
     due_date = models.DateField(blank=True, null=True)
     duration = models.IntegerField(default=1, help_text="Duration in days")
     progress = models.IntegerField(default=0, help_text="Progress percentage (0-100)")
+    project = models.ForeignKey('project.Project', on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     parent_task = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='subtasks')
     assignee = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, blank=True, null=True, related_name='tasks')
     dependencies = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='dependents')

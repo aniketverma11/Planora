@@ -47,7 +47,7 @@ import './TaskForm.css';
 import { createTask, updateTask, getTasks, getUsers, getTaskDocuments } from '../services/api';
 import DocumentManager from './DocumentManager';
 
-const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
+const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = null }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -210,6 +210,11 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
     try {
       // Prepare the data for submission
       const submitData = { ...formData };
+      
+      // Add project_id if provided
+      if (projectId) {
+        submitData.project_id = projectId;
+      }
       
       // Handle empty parent_task_id - convert empty string to null or remove entirely
       if (submitData.parent_task_id === '' || submitData.parent_task_id === '0' || submitData.parent_task_id === 0) {
