@@ -34,6 +34,7 @@ import GanttChart from './GanttChart';
 import KanbanBoard from './KanbanBoard';
 import TaskForm from './TaskForm';
 import TokenExpiryTimer from './TokenExpiryTimer';
+import HtmlContent from './HtmlContent';
 import { getAllTasks, deleteTask } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -454,9 +455,14 @@ const Dashboard = () => {
                       <Typography variant="subtitle2" gutterBottom>
                         Description
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {selectedTask.description}
-                      </Typography>
+                      <Box sx={{ 
+                        bgcolor: '#f8f9fa', 
+                        p: 2, 
+                        borderRadius: 1,
+                        border: '1px solid #e9ecef' 
+                      }}>
+                        <HtmlContent content={selectedTask.description} />
+                      </Box>
                     </>
                   )}
                 </Grid>

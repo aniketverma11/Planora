@@ -9,9 +9,40 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
   OutlinedInput,
+  Box,
+  Grid,
+  Typography,
+  Divider,
+  Chip,
+  Avatar,
+  IconButton,
+  Slider,
+  ToggleButton
 } from '@mui/material';
+import {
+  Close,
+  Title as TitleIcon,
+  Timeline,
+  Flag,
+  Person,
+  FolderOpen,
+  Link as LinkIcon,
+  BarChart,
+  FormatBold,
+  FormatItalic,
+  FormatUnderlined,
+  FormatListBulleted,
+  FormatListNumbered,
+  Code,
+} from '@mui/icons-material';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import { Link } from '@tiptap/extension-link';
+import './TaskForm.css';
 import { createTask, updateTask, getTasks, getUsers } from '../services/api';
 
 const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
@@ -30,6 +61,32 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
   });
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
+
+  // Initialize TipTap editor
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Placeholder.configure({
+        placeholder: 'Add a detailed description...',
+      }),
+      TextStyle,
+      Color,
+      Link.configure({
+        openOnClick: false,
+      }),
+    ],
+    content: formData.description,
+    onUpdate: ({ editor }) => {
+      setFormData({ ...formData, description: editor.getHTML() });
+    },
+  });
+
+  // Update editor content when task changes
+  useEffect(() => {
+    if (editor && formData.description !== editor.getHTML()) {
+      editor.commands.setContent(formData.description);
+    }
+  }, [formData.description, editor]);
 
   useEffect(() => {
     if (task) {
@@ -181,150 +238,770 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null }) => {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>{task ? 'Edit Task' : 'Add Task'}</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          margin="dense"
-          name="title"
-          label="Title"
-          type="text"
-          fullWidth
-          variant="standard"
-          value={formData.title}
-          onChange={handleChange}
-        />
-        <TextField
-          margin="dense"
-          name="description"
-          label="Description"
-          type="text"
-          fullWidth
-          multiline
-          rows={4}
-          variant="standard"
-          value={formData.description}
-          onChange={handleChange}
-        />
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Status</InputLabel>
-          <Select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-          >
-            <MenuItem value="To Do">To Do</MenuItem>
-            <MenuItem value="In Progress">In Progress</MenuItem>
-            <MenuItem value="Done">Done</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Priority</InputLabel>
-          <Select
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-          >
-            <MenuItem value="Low">Low</MenuItem>
-            <MenuItem value="Medium">Medium</MenuItem>
-            <MenuItem value="High">High</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Assignee</InputLabel>
-          <Select
-            name="assignee_id"
-            value={formData.assignee_id}
-            onChange={handleChange}
-          >
-            <MenuItem value="">None</MenuItem>
-            {users.map((user) => (
-              <MenuItem key={user.id} value={user.id}>
-                {user.username}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <TextField
-          margin="dense"
-          name="start_date"
-          label="Start Date"
-          type="date"
-          fullWidth
-          InputLabelProps={{
-            shrink: true,
-          }}
-          value={formData.start_date}
-          onChange={handleChange}
-        />
-        <TextField
-          margin="dense"
-          name="due_date"
-          label="Due Date"
-          type="date"
-          fullWidth
-          InputLabelProps={{
-            shrink: true,
-          }}
-          value={formData.due_date}
-          onChange={handleChange}
-        />
-        <TextField
-          margin="dense"
-          name="duration"
-          label="Duration (days)"
-          type="number"
-          fullWidth
-          value={formData.duration}
-          onChange={handleChange}
-          inputProps={{ min: 1 }}
-        />
-        <TextField
-          margin="dense"
-          name="progress"
-          label="Progress (%)"
-          type="number"
-          fullWidth
-          value={formData.progress}
-          onChange={handleChange}
-          inputProps={{ min: 0, max: 100 }}
-        />
-        <FormControl fullWidth margin="dense">
-          <InputLabel>Parent Task (for Subtasks)</InputLabel>
-          <Select
-            name="parent_task_id"
-            value={formData.parent_task_id}
-            onChange={handleChange}
-          >
-            <MenuItem value="">None (Main Task)</MenuItem>
-            {tasks.map((t) => (
-              <MenuItem key={t.id} value={t.id}>
-                {t.title}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl fullWidth margin="dense">
-            <InputLabel>Dependencies</InputLabel>
-            <Select
-                name="dependencies"
-                multiple
-                value={formData.dependencies}
-                onChange={handleMultiSelectChange}
-                input={<OutlinedInput label="Dependencies" />}
-            >
-                {tasks.map((t) => (
-                    <MenuItem key={t.id} value={t.id}>
-                        {t.title}
+    <Dialog 
+      open={open} 
+      onClose={handleClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
+        }
+      }}
+    >
+      <DialogTitle sx={{ 
+        bgcolor: '#f8f9fa', 
+        borderBottom: '1px solid #e9ecef',
+        p: 3,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <TitleIcon sx={{ color: '#1976d2' }} />
+          <Typography variant="h6" sx={{ fontWeight: 600, color: '#2c3e50' }}>
+            {task ? 'Edit Task' : 'Create New Task'}
+          </Typography>
+        </Box>
+        <IconButton onClick={handleClose} size="small">
+          <Close />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ p: 0, bgcolor: '#ffffff' }}>
+        <Grid container spacing={0} sx={{ minHeight: '500px', justifyContent: 'center'}}>
+          {/* Left Column - Main Details */}
+          <Grid item xs={12} md={8} sx={{ p: 3, pr: 4, borderRight: { md: '1px solid #e9ecef' }, minWidth: '600px' }}>
+            {/* Task Title */}
+            <Box sx={{ mb: 2.5 }}>
+              <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1, display: 'block', letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                TASK TITLE *
+              </Typography>
+              <TextField
+                autoFocus
+                name="title"
+                placeholder="Enter task title..."
+                fullWidth
+                variant="outlined"
+                value={formData.title}
+                onChange={handleChange}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: '#fafbfc',
+                    fontSize: '0.95rem',
+                    '&:hover': {
+                      bgcolor: '#ffffff',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#adb5bd',
+                      }
+                    },
+                    '&.Mui-focused': {
+                      bgcolor: '#ffffff',
+                    }
+                  }
+                }}
+              />
+            </Box>
+
+            {/* Description */}
+            <Box sx={{ mb: 2.5 }}>
+              <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1, display: 'block', letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                DESCRIPTION
+              </Typography>
+              <Box sx={{ 
+                border: '1px solid #dfe1e6',
+                borderRadius: '3px',
+                bgcolor: '#fafbfc',
+                overflow: 'hidden',
+                '&:hover': {
+                  bgcolor: '#ffffff',
+                  borderColor: '#b3bac5',
+                },
+                '&:focus-within': {
+                  bgcolor: '#ffffff',
+                  borderColor: '#4c9aff',
+                  boxShadow: '0 0 0 1px #4c9aff',
+                }
+              }}>
+                {/* Editor Toolbar */}
+                {editor && (
+                  <Box sx={{ 
+                    borderBottom: '1px solid #dfe1e6',
+                    bgcolor: '#f4f5f7',
+                    p: 0.5,
+                    px: 1,
+                    display: 'flex',
+                    gap: 0.25,
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                  }}>
+                    <ToggleButton
+                      value="bold"
+                      selected={editor.isActive('bold')}
+                      onChange={() => editor.chain().focus().toggleBold().run()}
+                      size="small"
+                      sx={{ 
+                        border: 'none', 
+                        borderRadius: '3px',
+                        minWidth: '32px',
+                        height: '32px',
+                        p: 0.5,
+                        color: editor.isActive('bold') ? '#0052cc' : '#42526e',
+                        bgcolor: editor.isActive('bold') ? '#deebff' : 'transparent',
+                        '&:hover': {
+                          bgcolor: editor.isActive('bold') ? '#b3d4ff' : '#f4f5f7',
+                        }
+                      }}
+                    >
+                      <FormatBold sx={{ fontSize: 18 }} />
+                    </ToggleButton>
+                    <ToggleButton
+                      value="italic"
+                      selected={editor.isActive('italic')}
+                      onChange={() => editor.chain().focus().toggleItalic().run()}
+                      size="small"
+                      sx={{ 
+                        border: 'none', 
+                        borderRadius: '3px',
+                        minWidth: '32px',
+                        height: '32px',
+                        p: 0.5,
+                        color: editor.isActive('italic') ? '#0052cc' : '#42526e',
+                        bgcolor: editor.isActive('italic') ? '#deebff' : 'transparent',
+                        '&:hover': {
+                          bgcolor: editor.isActive('italic') ? '#b3d4ff' : '#f4f5f7',
+                        }
+                      }}
+                    >
+                      <FormatItalic sx={{ fontSize: 18 }} />
+                    </ToggleButton>
+                    <ToggleButton
+                      value="underline"
+                      selected={editor.isActive('strike')}
+                      onChange={() => editor.chain().focus().toggleStrike().run()}
+                      size="small"
+                      sx={{ 
+                        border: 'none', 
+                        borderRadius: '3px',
+                        minWidth: '32px',
+                        height: '32px',
+                        p: 0.5,
+                        color: editor.isActive('strike') ? '#0052cc' : '#42526e',
+                        bgcolor: editor.isActive('strike') ? '#deebff' : 'transparent',
+                        '&:hover': {
+                          bgcolor: editor.isActive('strike') ? '#b3d4ff' : '#f4f5f7',
+                        }
+                      }}
+                    >
+                      <FormatUnderlined sx={{ fontSize: 18 }} />
+                    </ToggleButton>
+                    <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#dfe1e6' }} />
+                    <ToggleButton
+                      value="bulletList"
+                      selected={editor.isActive('bulletList')}
+                      onChange={() => editor.chain().focus().toggleBulletList().run()}
+                      size="small"
+                      sx={{ 
+                        border: 'none', 
+                        borderRadius: '3px',
+                        minWidth: '32px',
+                        height: '32px',
+                        p: 0.5,
+                        color: editor.isActive('bulletList') ? '#0052cc' : '#42526e',
+                        bgcolor: editor.isActive('bulletList') ? '#deebff' : 'transparent',
+                        '&:hover': {
+                          bgcolor: editor.isActive('bulletList') ? '#b3d4ff' : '#f4f5f7',
+                        }
+                      }}
+                    >
+                      <FormatListBulleted sx={{ fontSize: 18 }} />
+                    </ToggleButton>
+                    <ToggleButton
+                      value="orderedList"
+                      selected={editor.isActive('orderedList')}
+                      onChange={() => editor.chain().focus().toggleOrderedList().run()}
+                      size="small"
+                      sx={{ 
+                        border: 'none', 
+                        borderRadius: '3px',
+                        minWidth: '32px',
+                        height: '32px',
+                        p: 0.5,
+                        color: editor.isActive('orderedList') ? '#0052cc' : '#42526e',
+                        bgcolor: editor.isActive('orderedList') ? '#deebff' : 'transparent',
+                        '&:hover': {
+                          bgcolor: editor.isActive('orderedList') ? '#b3d4ff' : '#f4f5f7',
+                        }
+                      }}
+                    >
+                      <FormatListNumbered sx={{ fontSize: 18 }} />
+                    </ToggleButton>
+                    <Divider orientation="vertical" flexItem sx={{ mx: 0.5, borderColor: '#dfe1e6' }} />
+                    <ToggleButton
+                      value="heading1"
+                      selected={editor.isActive('heading', { level: 1 })}
+                      onChange={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                      size="small"
+                      sx={{ 
+                        border: 'none', 
+                        borderRadius: '3px',
+                        minWidth: '32px',
+                        height: '32px',
+                        fontSize: '0.7rem', 
+                        fontWeight: 'bold',
+                        color: editor.isActive('heading', { level: 1 }) ? '#0052cc' : '#42526e',
+                        bgcolor: editor.isActive('heading', { level: 1 }) ? '#deebff' : 'transparent',
+                        '&:hover': {
+                          bgcolor: editor.isActive('heading', { level: 1 }) ? '#b3d4ff' : '#f4f5f7',
+                        }
+                      }}
+                    >
+                      H1
+                    </ToggleButton>
+                    <ToggleButton
+                      value="heading2"
+                      selected={editor.isActive('heading', { level: 2 })}
+                      onChange={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                      size="small"
+                      sx={{ 
+                        border: 'none', 
+                        borderRadius: '3px',
+                        minWidth: '32px',
+                        height: '32px',
+                        fontSize: '0.7rem', 
+                        fontWeight: 'bold',
+                        color: editor.isActive('heading', { level: 2 }) ? '#0052cc' : '#42526e',
+                        bgcolor: editor.isActive('heading', { level: 2 }) ? '#deebff' : 'transparent',
+                        '&:hover': {
+                          bgcolor: editor.isActive('heading', { level: 2 }) ? '#b3d4ff' : '#f4f5f7',
+                        }
+                      }}
+                    >
+                      H2
+                    </ToggleButton>
+                    <ToggleButton
+                      value="codeBlock"
+                      selected={editor.isActive('codeBlock')}
+                      onChange={() => editor.chain().focus().toggleCodeBlock().run()}
+                      size="small"
+                      sx={{ 
+                        border: 'none', 
+                        borderRadius: '3px',
+                        minWidth: '32px',
+                        height: '32px',
+                        p: 0.5,
+                        color: editor.isActive('codeBlock') ? '#0052cc' : '#42526e',
+                        bgcolor: editor.isActive('codeBlock') ? '#deebff' : 'transparent',
+                        '&:hover': {
+                          bgcolor: editor.isActive('codeBlock') ? '#b3d4ff' : '#f4f5f7',
+                        }
+                      }}
+                    >
+                      <Code sx={{ fontSize: 18 }} />
+                    </ToggleButton>
+                  </Box>
+                )}
+                
+                {/* Editor Content */}
+                <Box sx={{
+                  '& .ProseMirror': {
+                    minHeight: '150px',
+                    maxHeight: '300px',
+                    overflowY: 'auto',
+                    padding: '10px 14px',
+                    outline: 'none',
+                    fontSize: '14px',
+                    lineHeight: 1.6,
+                    color: '#172b4d',
+                    '& p': { margin: '0.5em 0' },
+                    '& h1': { fontSize: '2em', margin: '0.5em 0', fontWeight: 600 },
+                    '& h2': { fontSize: '1.5em', margin: '0.5em 0', fontWeight: 600 },
+                    '& h3': { fontSize: '1.17em', margin: '0.5em 0', fontWeight: 600 },
+                    '& ul, & ol': { paddingLeft: '1.5em', margin: '0.5em 0' },
+                    '& a': { color: '#0052cc', textDecoration: 'underline' },
+                    '& code': { 
+                      bgcolor: '#f4f5f7', 
+                      padding: '2px 6px', 
+                      borderRadius: '3px',
+                      fontSize: '0.9em',
+                      fontFamily: 'monospace'
+                    },
+                    '& pre': {
+                      bgcolor: '#f4f5f7',
+                      padding: '12px',
+                      borderRadius: '3px',
+                      overflow: 'auto',
+                      '& code': {
+                        bgcolor: 'transparent',
+                        padding: 0
+                      }
+                    },
+                    '&.ProseMirror-focused': {
+                      outline: 'none',
+                    },
+                  },
+                  '& .ProseMirror p.is-editor-empty:first-child::before': {
+                    color: '#8993a4',
+                    content: 'attr(data-placeholder)',
+                    float: 'left',
+                    height: 0,
+                    pointerEvents: 'none',
+                  }
+                }}>
+                  <EditorContent editor={editor} />
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Dates Section */}
+            <Grid container spacing={2} sx={{ mb: 2.5 }}>
+              <Grid item xs={6}>
+                <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1, display: 'block', letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                  START DATE
+                </Typography>
+                <TextField
+                  fullWidth
+                  type="date"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: {
+                      bgcolor: '#fafbfc',
+                      fontSize: '0.95rem',
+                      '& input': {
+                        padding: '8px 12px',
+                      },
+                      '&:hover': {
+                        bgcolor: '#ffffff',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#b3bac5',
+                        }
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: '#ffffff',
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dfe1e6',
+                        borderRadius: '3px',
+                      }
+                    }
+                  }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1, display: 'block', letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                  DUE DATE
+                </Typography>
+                <TextField
+                  fullWidth
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: {
+                      bgcolor: '#fafbfc',
+                      fontSize: '0.95rem',
+                      '& input': {
+                        padding: '8px 12px',
+                      },
+                      '&:hover': {
+                        bgcolor: '#ffffff',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#b3bac5',
+                        }
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: '#ffffff',
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dfe1e6',
+                        borderRadius: '3px',
+                      }
+                    }
+                  }}
+                />
+              </Grid>
+            </Grid>
+
+            {/* Progress */}
+            <Box sx={{ mb: 2.5 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                  PROGRESS
+                </Typography>
+                <Chip 
+                  label={`${formData.progress}%`} 
+                  size="small"
+                  sx={{ 
+                    bgcolor: formData.progress === 100 ? '#d1fae5' : formData.progress > 0 ? '#fef3c7' : '#e5e7eb',
+                    color: formData.progress === 100 ? '#065f46' : formData.progress > 0 ? '#92400e' : '#6c757d',
+                    fontWeight: 600,
+                    minWidth: '60px',
+                    fontSize: '0.75rem'
+                  }}
+                />
+              </Box>
+              <Slider
+                name="progress"
+                value={formData.progress}
+                onChange={(e, newValue) => setFormData({ ...formData, progress: newValue })}
+                min={0}
+                max={100}
+                step={5}
+                marks={[
+                  { value: 0, label: '0%' },
+                  { value: 50, label: '50%' },
+                  { value: 100, label: '100%' },
+                ]}
+                sx={{
+                  color: '#0052cc',
+                  height: 6,
+                  '& .MuiSlider-thumb': {
+                    width: 16,
+                    height: 16,
+                    bgcolor: formData.progress === 100 ? '#10b981' : '#0052cc',
+                    '&:hover, &.Mui-focusVisible': {
+                      boxShadow: '0 0 0 8px rgba(0, 82, 204, 0.16)',
+                    },
+                  },
+                  '& .MuiSlider-track': {
+                    bgcolor: formData.progress === 100 ? '#10b981' : '#0052cc',
+                  },
+                  '& .MuiSlider-rail': {
+                    bgcolor: '#dfe1e6',
+                  },
+                  '& .MuiSlider-mark': {
+                    bgcolor: '#dfe1e6',
+                  },
+                  '& .MuiSlider-markLabel': {
+                    fontSize: '0.65rem',
+                    color: '#6c757d',
+                  }
+                }}
+              />
+            </Box>
+          </Grid>
+
+          {/* Right Column - Metadata */}
+          <Grid item xs={12} md={4} sx={{ p: 3, bgcolor: '#fafbfc', borderLeft: '1px solid #dfe1e6' }}>
+            <Box>
+              {/* Status */}
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5, letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                  <BarChart sx={{ fontSize: 14 }} />
+                  STATUS
+                </Typography>
+                <FormControl fullWidth size="small">
+                  <Select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    sx={{
+                      bgcolor: '#ffffff',
+                      fontSize: '0.95rem',
+                      '& .MuiSelect-select': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        padding: '8px 12px',
+                      },
+                      '&:hover': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#b3bac5',
+                        }
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dfe1e6',
+                        borderRadius: '3px',
+                      }
+                    }}
+                  >
+                    <MenuItem value="To Do">
+                      <Chip label="To Do" size="small" sx={{ bgcolor: '#e5e7eb', color: '#374151', fontWeight: 500 }} />
                     </MenuItem>
-                ))}
-            </Select>
-        </FormControl>
+                    <MenuItem value="In Progress">
+                      <Chip label="In Progress" size="small" sx={{ bgcolor: '#fef3c7', color: '#92400e', fontWeight: 500 }} />
+                    </MenuItem>
+                    <MenuItem value="Done">
+                      <Chip label="Done" size="small" sx={{ bgcolor: '#d1fae5', color: '#065f46', fontWeight: 500 }} />
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* Priority */}
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5, letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                  <Flag sx={{ fontSize: 14 }} />
+                  PRIORITY
+                </Typography>
+                <FormControl fullWidth size="small">
+                  <Select
+                    name="priority"
+                    value={formData.priority}
+                    onChange={handleChange}
+                    sx={{
+                      bgcolor: '#ffffff',
+                      fontSize: '0.95rem',
+                      '& .MuiSelect-select': {
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        padding: '8px 12px',
+                      },
+                      '&:hover': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#b3bac5',
+                        }
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dfe1e6',
+                        borderRadius: '3px',
+                      }
+                    }}
+                  >
+                    <MenuItem value="Low">
+                      <Chip label="Low" size="small" sx={{ bgcolor: '#dbeafe', color: '#1e40af', fontWeight: 500 }} />
+                    </MenuItem>
+                    <MenuItem value="Medium">
+                      <Chip label="Medium" size="small" sx={{ bgcolor: '#fef3c7', color: '#92400e', fontWeight: 500 }} />
+                    </MenuItem>
+                    <MenuItem value="High">
+                      <Chip label="High" size="small" sx={{ bgcolor: '#fee2e2', color: '#991b1b', fontWeight: 500 }} />
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* Assignee */}
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5, letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                  <Person sx={{ fontSize: 14 }} />
+                  ASSIGNEE
+                </Typography>
+                <FormControl fullWidth size="small">
+                  <Select
+                    name="assignee_id"
+                    value={formData.assignee_id}
+                    onChange={handleChange}
+                    sx={{ 
+                      bgcolor: '#ffffff',
+                      fontSize: '0.95rem',
+                      '& .MuiSelect-select': {
+                        padding: '8px 12px',
+                      },
+                      '&:hover': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#b3bac5',
+                        }
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dfe1e6',
+                        borderRadius: '3px',
+                      }
+                    }}
+                    renderValue={(selected) => {
+                      if (!selected) return <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.95rem' }}>Unassigned</Typography>;
+                      const user = users.find(u => u.id === selected);
+                      return (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar sx={{ width: 20, height: 20, fontSize: '0.7rem', bgcolor: '#0052cc' }}>
+                            {user?.username?.charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Typography variant="body2" sx={{ fontSize: '0.95rem' }}>{user?.username}</Typography>
+                        </Box>
+                      );
+                    }}
+                  >
+                    <MenuItem value="">
+                      <Typography variant="body2" color="text.secondary">Unassigned</Typography>
+                    </MenuItem>
+                    {users.map((user) => (
+                      <MenuItem key={user.id} value={user.id}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem', bgcolor: '#1976d2' }}>
+                            {user.username.charAt(0).toUpperCase()}
+                          </Avatar>
+                          {user.username}
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              <Divider sx={{ my: 2.5, borderColor: '#dfe1e6' }} />
+
+              {/* Duration */}
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5, letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                  <Timeline sx={{ fontSize: 14 }} />
+                  DURATION (DAYS)
+                </Typography>
+                <TextField
+                  name="duration"
+                  type="number"
+                  fullWidth
+                  size="small"
+                  value={formData.duration}
+                  onChange={handleChange}
+                  inputProps={{ min: 1 }}
+                  sx={{ 
+                    bgcolor: '#ffffff',
+                    fontSize: '0.95rem',
+                    '& input': {
+                      padding: '8px 12px',
+                    },
+                    '& .MuiOutlinedInput-root:hover': {
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#b3bac5',
+                      }
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#dfe1e6',
+                      borderRadius: '3px',
+                    }
+                  }}
+                />
+              </Box>
+
+              {/* Parent Task */}
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5, letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                  <FolderOpen sx={{ fontSize: 14 }} />
+                  PARENT TASK
+                </Typography>
+                <FormControl fullWidth size="small">
+                  <Select
+                    name="parent_task_id"
+                    value={formData.parent_task_id}
+                    onChange={handleChange}
+                    sx={{ 
+                      bgcolor: '#ffffff',
+                      fontSize: '0.95rem',
+                      '& .MuiSelect-select': {
+                        padding: '8px 12px',
+                      },
+                      '&:hover': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#b3bac5',
+                        }
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dfe1e6',
+                        borderRadius: '3px',
+                      }
+                    }}
+                  >
+                    <MenuItem value="">
+                      <Typography variant="body2" color="text.secondary">None (Main Task)</Typography>
+                    </MenuItem>
+                    {tasks.map((t) => (
+                      <MenuItem key={t.id} value={t.id}>
+                        {t.title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {/* Dependencies */}
+              <Box>
+                <Typography variant="caption" sx={{ color: '#6c757d', fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 0.5, letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+                  <LinkIcon sx={{ fontSize: 14 }} />
+                  DEPENDENCIES
+                </Typography>
+                <FormControl fullWidth size="small">
+                  <Select
+                    name="dependencies"
+                    multiple
+                    value={formData.dependencies}
+                    onChange={handleMultiSelectChange}
+                    input={<OutlinedInput />}
+                    sx={{ 
+                      bgcolor: '#ffffff',
+                      fontSize: '0.95rem',
+                      '& .MuiSelect-select': {
+                        padding: '8px 12px',
+                      },
+                      '&:hover': {
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#b3bac5',
+                        }
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#dfe1e6',
+                        borderRadius: '3px',
+                      }
+                    }}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.length === 0 ? (
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.95rem' }}>None</Typography>
+                        ) : (
+                          selected.map((value) => {
+                            const task = tasks.find(t => t.id === value);
+                            return (
+                              <Chip 
+                                key={value} 
+                                label={task?.title || value} 
+                                size="small"
+                                sx={{ bgcolor: '#e5e7eb', fontSize: '0.7rem', height: '20px' }}
+                              />
+                            );
+                          })
+                        )}
+                      </Box>
+                    )}
+                  >
+                    {tasks.map((t) => (
+                      <MenuItem key={t.id} value={t.id}>
+                        {t.title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={handleSubmit}>Save</Button>
+
+      <DialogActions sx={{ 
+        p: 2.5, 
+        bgcolor: '#f8f9fa', 
+        borderTop: '1px solid #e9ecef',
+        gap: 1
+      }}>
+        <Button 
+          onClick={handleClose}
+          sx={{ 
+            textTransform: 'none',
+            color: '#6c757d',
+            '&:hover': {
+              bgcolor: '#e9ecef'
+            }
+          }}
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          variant="contained"
+          sx={{
+            textTransform: 'none',
+            bgcolor: '#1976d2',
+            px: 3,
+            '&:hover': {
+              bgcolor: '#1565c0'
+            }
+          }}
+        >
+          {task ? 'Update Task' : 'Create Task'}
+        </Button>
       </DialogActions>
     </Dialog>
   );
