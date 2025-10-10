@@ -22,7 +22,10 @@ const theme = createTheme({
 const AppRoutes = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
+  console.log('🎯 AppRoutes render - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
+
   if (isLoading) {
+    console.log('⏳ Still loading authentication state...');
     return (
       <Box
         display="flex"
@@ -34,6 +37,8 @@ const AppRoutes = () => {
       </Box>
     );
   }
+
+  console.log('✅ Authentication loaded, rendering routes');
 
   return (
     <Routes>

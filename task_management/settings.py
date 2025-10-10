@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'tasks',
+    'project',
     'drf_yasg',
     'import_export'
 ]

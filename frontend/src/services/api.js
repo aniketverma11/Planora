@@ -13,8 +13,15 @@ const isTokenExpired = (token) => {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
     const currentTime = Date.now() / 1000;
-    return payload.exp < currentTime;
+    const expired = payload.exp < currentTime;
+    console.log('🔍 API Token Check:', {
+      exp: new Date(payload.exp * 1000).toLocaleString(),
+      currentTime: new Date(currentTime * 1000).toLocaleString(),
+      expired
+    });
+    return expired;
   } catch (error) {
+    console.error('❌ Error checking token expiration:', error);
     return true;
   }
 };
@@ -22,13 +29,19 @@ const isTokenExpired = (token) => {
 // Request interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
+  console.log('📤 API Request:', config.url, 'Token exists:', !!token);
+  
   if (token && !isTokenExpired(token)) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('✅ Token added to request');
   } else if (token && isTokenExpired(token)) {
     // Token is expired, trigger logout
+    console.log('⚠️ Token expired in request interceptor, clearing auth');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.dispatchEvent(new CustomEvent('tokenExpired'));
+  } else {
+    console.log('ℹ️ No token available for request');
   }
   return config;
 });
@@ -37,7 +50,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    console.log('📥 API Response Error:', error.response?.status, error.config?.url);
     if (error.response?.status === 401) {
+      console.log('⚠️ 401 Unauthorized - clearing auth');
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.dispatchEvent(new CustomEvent('tokenExpired'));
