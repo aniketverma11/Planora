@@ -255,6 +255,20 @@ const Dashboard = () => {
     return tasks.data.filter(task => task.parent === taskId);
   };
 
+  const getDependencyTasks = (dependencyIds) => {
+    if (!dependencyIds || !Array.isArray(dependencyIds)) return [];
+    return tasks.data.filter(task => dependencyIds.includes(task.id));
+  };
+
+  const handleCreateSubtask = (parentTask) => {
+    setDetailsDialogOpen(false);
+    setEditingTask({
+      parent_task: parentTask.id,
+      parent_task_title: parentTask.text
+    });
+    setTaskFormOpen(true);
+  };
+
   const handleUserMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -360,7 +374,21 @@ const Dashboard = () => {
         {selectedTask && (
           <>
             <DialogTitle sx={{ bgcolor: '#1976d2', color: 'white' }}>
-              <Typography variant="h6">{selectedTask.text}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="h6">{selectedTask.text}</Typography>
+                {selectedTask.parent && (
+                  <Chip 
+                    label="Subtask" 
+                    size="small" 
+                    sx={{ 
+                      bgcolor: '#ffffff', 
+                      color: '#1976d2',
+                      fontWeight: 600,
+                      fontSize: '0.7rem'
+                    }} 
+                  />
+                )}
+              </Box>
             </DialogTitle>
             <DialogContent sx={{ mt: 2 }}>
               <Grid container spacing={2}>
@@ -413,7 +441,32 @@ const Dashboard = () => {
                 </Grid>
                 
                 <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                  {/* Parent Task Section (if this is a subtask) */}
+                  {selectedTask.parent && (
+                    <>
+                      <Typography variant="subtitle2" gutterBottom sx={{ mt: 2 }}>
+                        Parent Task
+                      </Typography>
+                      <Chip 
+                        label={tasks.data.find(t => t.id === selectedTask.parent)?.text || `Task #${selectedTask.parent}`}
+                        onClick={() => {
+                          const parentTask = tasks.data.find(t => t.id === selectedTask.parent);
+                          if (parentTask) handleTaskClick(parentTask);
+                        }}
+                        sx={{ 
+                          mb: 2, 
+                          bgcolor: '#e3f2fd',
+                          color: '#1976d2',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            bgcolor: '#bbdefb'
+                          }
+                        }}
+                      />
+                    </>
+                  )}
+                  
+                  <Typography variant="subtitle2" gutterBottom sx={{ mt: selectedTask.parent ? 0 : 2 }}>
                     Status
                   </Typography>
                   <Chip 
@@ -467,22 +520,89 @@ const Dashboard = () => {
                   )}
                 </Grid>
                 
+                {/* Dependencies Section */}
+                {selectedTask.dependencies && selectedTask.dependencies.length > 0 && (
+                  <Grid item xs={12}>
+                    <Typography variant="h6" gutterBottom sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Timeline />
+                      Dependencies ({selectedTask.dependencies.length})
+                    </Typography>
+                    <List sx={{ bgcolor: '#f8f9fa', borderRadius: 1 }}>
+                      {getDependencyTasks(selectedTask.dependencies).map((depTask) => (
+                        <ListItem 
+                          key={depTask.id}
+                          sx={{ 
+                            borderBottom: '1px solid #e9ecef',
+                            '&:last-child': { borderBottom: 'none' },
+                            cursor: 'pointer',
+                            '&:hover': { bgcolor: '#e9ecef' }
+                          }}
+                          onClick={() => handleTaskClick(depTask)}
+                        >
+                          <ListItemText 
+                            primary={depTask.text}
+                            secondary={
+                              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                                <Chip 
+                                  label={depTask.status}
+                                  size="small"
+                                  color={depTask.status === 'Done' ? 'success' : depTask.status === 'In Progress' ? 'warning' : 'default'}
+                                />
+                                <Typography variant="caption" color="text.secondary">
+                                  {depTask.progress}% complete
+                                </Typography>
+                              </Box>
+                            }
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Grid>
+                )}
+                
+                {/* Subtasks Section */}
                 {!selectedTask.parent && getSubtasksForTask(selectedTask.id).length > 0 && (
                   <Grid item xs={12}>
-                    <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                    <Typography variant="h6" gutterBottom sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CheckCircle />
                       Subtasks ({getSubtasksForTask(selectedTask.id).length})
                     </Typography>
-                    <List>
+                    <List sx={{ bgcolor: '#f8f9fa', borderRadius: 1 }}>
                       {getSubtasksForTask(selectedTask.id).map((subtask) => (
-                        <ListItem key={subtask.id}>
+                        <ListItem 
+                          key={subtask.id}
+                          sx={{ 
+                            borderBottom: '1px solid #e9ecef',
+                            '&:last-child': { borderBottom: 'none' },
+                            cursor: 'pointer',
+                            '&:hover': { bgcolor: '#e9ecef' }
+                          }}
+                          onClick={() => handleTaskClick(subtask)}
+                        >
                           <ListItemText 
                             primary={subtask.text}
-                            secondary={`${subtask.progress}% complete`}
-                          />
-                          <Chip 
-                            label={subtask.status}
-                            size="small"
-                            color={subtask.progress === 100 ? 'success' : subtask.progress > 0 ? 'warning' : 'default'}
+                            secondary={
+                              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                                <Chip 
+                                  label={subtask.status}
+                                  size="small"
+                                  color={subtask.status === 'Done' ? 'success' : subtask.status === 'In Progress' ? 'warning' : 'default'}
+                                />
+                                <Typography variant="caption" color="text.secondary">
+                                  {subtask.progress}% complete
+                                </Typography>
+                                {subtask.priority && (
+                                  <Chip 
+                                    label={subtask.priority}
+                                    size="small"
+                                    sx={{ 
+                                      bgcolor: subtask.priority === 'High' ? '#fee2e2' : subtask.priority === 'Medium' ? '#fef3c7' : '#dbeafe',
+                                      color: subtask.priority === 'High' ? '#991b1b' : subtask.priority === 'Medium' ? '#92400e' : '#1e40af',
+                                    }}
+                                  />
+                                )}
+                              </Box>
+                            }
                           />
                         </ListItem>
                       ))}
@@ -493,6 +613,16 @@ const Dashboard = () => {
             </DialogContent>
             <DialogActions>
               <Button onClick={() => setDetailsDialogOpen(false)}>Close</Button>
+              {!selectedTask.parent && (
+                <Button 
+                  onClick={() => handleCreateSubtask(selectedTask)} 
+                  variant="outlined"
+                  startIcon={<Add />}
+                  color="primary"
+                >
+                  Create Subtask
+                </Button>
+              )}
               <Button onClick={() => handleEditTask(selectedTask)} variant="contained">
                 Edit
               </Button>
