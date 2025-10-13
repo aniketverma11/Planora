@@ -90,56 +90,70 @@ const Login = () => {
       sx={{
         minHeight: '100vh',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
-        padding: 2,
+        background: '#f5f5f5',
+        '@media (max-width: 900px)': {
+          background: 'white',
+        },
       }}
     >
-      <Container component="main" maxWidth="sm">
-        <Paper
-          elevation={8}
-          sx={{
-            borderRadius: 3,
-            overflow: 'hidden',
-            background: 'white',
-          }}
-        >
+      {/* Left Side - Login Form */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: { xs: 2, sm: 3, md: 4, lg: 5 },
+          overflow: 'auto',
+          minHeight: '100vh',
+        }}
+      >
+        <Box sx={{ width: '100%', maxWidth: 500, mx: 'auto' }}>
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              overflow: 'hidden',
+              background: 'white',
+              boxShadow: { 
+                xs: 'none',
+                md: '0 4px 20px rgba(0,0,0,0.08)',
+              },
+            }}
+          >
           {/* Header Section */}
           <Box
             sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              color: 'white',
-              py: 4,
-              px: 3,
+              py: 5,
+              px: 4,
               textAlign: 'center',
             }}
           >
             <Box
               sx={{
-                width: 70,
-                height: 70,
+                width: 60,
+                height: 60,
                 borderRadius: '50%',
-                background: alpha('#fff', 0.2),
+                background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                margin: '0 auto 16px',
-                backdropFilter: 'blur(10px)',
+                margin: '0 auto 20px',
+                boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.3)}`,
               }}
             >
-              <LoginIcon sx={{ fontSize: 35 }} />
+              <LoginIcon sx={{ fontSize: 30, color: 'white' }} />
             </Box>
-            <Typography component="h1" variant="h4" fontWeight={600}>
+            <Typography component="h1" variant="h4" fontWeight={700} color="text.primary">
               Welcome Back
             </Typography>
-            <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
               Sign in to continue to your account
             </Typography>
           </Box>
 
           {/* Form Section */}
-          <Box sx={{ px: 4, py: 4 }}>
+          <Box sx={{ px: 4, pb: 5 }}>
             {error && (
               <Alert 
                 severity="error" 
@@ -291,8 +305,179 @@ const Login = () => {
             </Box>
           </Box>
         </Paper>
-      </Container>
+      </Box>
     </Box>
+
+    {/* Right Side - Image */}
+    <Box
+      sx={{
+        flex: 1,
+        display: { xs: 'none', md: 'flex' },
+        position: 'relative',
+        overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {/* Background Image */}
+      <Box
+        component="img"
+        src="/login-image.png"
+        alt="Login illustration"
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+        }}
+      />
+      
+      {/* Overlay with content */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.85)} 0%, ${alpha(theme.palette.primary.dark, 0.85)} 100%)`,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          padding: 6,
+          textAlign: 'center',
+          zIndex: 1,
+        }}
+      >
+        <Typography 
+          variant="h2" 
+          fontWeight={700} 
+          sx={{ 
+            mb: 3,
+            fontSize: { md: '3rem', lg: '3.5rem' },
+            textShadow: '0 2px 10px rgba(0,0,0,0.2)',
+          }}
+        >
+          Welcome Back!
+        </Typography>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            mb: 6, 
+            maxWidth: 550, 
+            opacity: 0.95,
+            fontSize: '1.1rem',
+            lineHeight: 1.6,
+            textShadow: '0 1px 5px rgba(0,0,0,0.2)',
+          }}
+        >
+          Manage your tasks efficiently with our powerful project management tool
+        </Typography>
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            gap: 4,
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+          <Box sx={{ textAlign: 'center', minWidth: 120 }}>
+            <Typography 
+              variant="h3" 
+              fontWeight={700}
+              sx={{ 
+                fontSize: '2.5rem',
+                mb: 1,
+                textShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              }}
+            >
+              1000+
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                fontSize: '0.95rem',
+                opacity: 0.9,
+              }}
+            >
+              Active Users
+            </Typography>
+          </Box>
+          
+          <Divider 
+            orientation="vertical" 
+            flexItem 
+            sx={{ 
+              borderColor: 'rgba(255,255,255,0.4)',
+              height: 60,
+              alignSelf: 'center',
+            }} 
+          />
+          
+          <Box sx={{ textAlign: 'center', minWidth: 120 }}>
+            <Typography 
+              variant="h3" 
+              fontWeight={700}
+              sx={{ 
+                fontSize: '2.5rem',
+                mb: 1,
+                textShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              }}
+            >
+              5000+
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                fontSize: '0.95rem',
+                opacity: 0.9,
+              }}
+            >
+              Projects
+            </Typography>
+          </Box>
+          
+          <Divider 
+            orientation="vertical" 
+            flexItem 
+            sx={{ 
+              borderColor: 'rgba(255,255,255,0.4)',
+              height: 60,
+              alignSelf: 'center',
+            }} 
+          />
+          
+          <Box sx={{ textAlign: 'center', minWidth: 120 }}>
+            <Typography 
+              variant="h3" 
+              fontWeight={700}
+              sx={{ 
+                fontSize: '2.5rem',
+                mb: 1,
+                textShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              }}
+            >
+              99%
+            </Typography>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                fontSize: '0.95rem',
+                opacity: 0.9,
+              }}
+            >
+              Satisfaction
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  </Box>
   );
 };
 
