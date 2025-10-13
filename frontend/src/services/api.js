@@ -63,6 +63,7 @@ api.interceptors.response.use(
 
 export const login = (credentials) => api.post('users/login/', credentials);
 export const signup = (userData) => api.post('users/signup/', userData);
+export const googleAuth = (token) => api.post('users/google-auth/', { token });
 export const getUsers = () => api.get('users/');
 
 // Project APIs
