@@ -143,13 +143,29 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = nu
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const { data } = await getTasks();
+        console.log('🔍 TaskForm: Fetching tasks for projectId:', projectId);
+        let data;
+        
+        if (projectId) {
+          // Fetch only tasks from the current project
+          const response = await getTasks(projectId);
+          data = response.data;
+          console.log('✅ TaskForm: Loaded', data.length, 'tasks from project', projectId);
+        } else {
+          // Fallback: fetch all tasks if no project
+          const response = await getTasks();
+          data = response.data;
+          console.log('⚠️ TaskForm: No projectId, loaded all tasks:', data.length);
+        }
+        
         // Filter out the current task and its subtasks for parent selection
         const availableTasks = data.filter(t => {
           if (task && t.id === task.id) return false;
           if (task && t.parent_task === task.id) return false;
           return true;
         });
+        
+        console.log('📋 TaskForm: Available tasks for parent/dependency:', availableTasks.length);
         setTasks(availableTasks);
       } catch (error) {
         console.error('Failed to fetch tasks:', error);
@@ -181,7 +197,7 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = nu
         fetchUsers();
         fetchDocuments();
     }
-  }, [open, task]);
+  }, [open, task, projectId]);
 
   const handleDocumentsChange = async () => {
     if (task?.id) {
@@ -208,12 +224,16 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = nu
 
   const handleSubmit = async () => {
     try {
+      console.log('🎯 TaskForm: Starting submit with projectId:', projectId);
       // Prepare the data for submission
       const submitData = { ...formData };
       
       // Add project_id if provided
       if (projectId) {
         submitData.project_id = projectId;
+        console.log('✅ TaskForm: Added project_id to submitData:', projectId);
+      } else {
+        console.warn('⚠️ TaskForm: No projectId provided!');
       }
       
       // Handle empty parent_task_id - convert empty string to null or remove entirely
@@ -250,11 +270,14 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = nu
       }
       
       console.log('Final submitData:', submitData);
+      console.log('📤 TaskForm: Submitting task with project_id:', submitData.project_id);
       
       if (task) {
         await updateTask(task.id, submitData);
+        console.log('✅ TaskForm: Task updated successfully');
       } else {
-        await createTask(submitData);
+        const response = await createTask(submitData);
+        console.log('✅ TaskForm: Task created successfully:', response.data);
       }
       handleClose();
     } catch (error) {

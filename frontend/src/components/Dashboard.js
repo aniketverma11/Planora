@@ -83,9 +83,14 @@ const GanttChartView = ({ projectId }) => {
             const response = await getAllTasks(projectId);
             const tasks = response.data;
             console.log('✅ GanttChart: Loaded tasks:', tasks.length);
+            console.log('📋 GanttChart: Task details:', tasks);
                 
                 if (!Array.isArray(tasks)) {
                     throw new Error('Invalid tasks data received');
+                }
+                
+                if (tasks.length === 0) {
+                    console.log('⚠️ GanttChart: No tasks found for project:', projectId);
                 }
                 
                 const formattedTasks = tasks.map(task => {
@@ -234,6 +239,7 @@ const Dashboard = () => {
       console.log('📊 Dashboard: Fetching tasks for project:', selectedProject.name, 'ID:', selectedProject.id);
       const response = await getAllTasks(selectedProject.id);
       console.log('✅ Dashboard: Received tasks:', response.data.length);
+      console.log('📋 Dashboard: Raw task data:', response.data);
       const formattedTasks = response.data.map(task => ({
         id: task.id,
         text: task.title || 'Untitled Task',
@@ -252,6 +258,8 @@ const Dashboard = () => {
         project: task.project,
       }));
       setTasks({ data: formattedTasks });
+      console.log('✅ Dashboard: Tasks state updated with', formattedTasks.length, 'tasks');
+      console.log('📊 Dashboard: Current tasks state:', { data: formattedTasks });
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
     }
