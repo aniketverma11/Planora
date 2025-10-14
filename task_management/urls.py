@@ -16,7 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import (
@@ -26,6 +26,7 @@ from rest_framework_simplejwt.views import (
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+from .views import ReactAppView
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -41,11 +42,19 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    # Django Admin
     path("admin/", admin.site.urls),
+    
+    # JWT Authentication
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    
+    # API Routes
     path('api/users/', include('users.urls')),
     path('api/', include('tasks.urls')),
+    path('api/', include('project.urls')),
+    
+    # API Documentation
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
@@ -53,3 +62,10 @@ urlpatterns = [
 # Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Serve React App (MUST be last to catch all remaining routes)
+# This allows React Router to handle frontend routing
+urlpatterns += [
+    re_path(r'^.*$', ReactAppView.as_view(), name='react-app'),
+]

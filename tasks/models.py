@@ -23,9 +23,19 @@ class Task(models.Model):
     due_date = models.DateField(blank=True, null=True)
     duration = models.IntegerField(default=1, help_text="Duration in days")
     progress = models.IntegerField(default=0, help_text="Progress percentage (0-100)")
+    project = models.ForeignKey('project.Project', on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     parent_task = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='subtasks')
     assignee = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, blank=True, null=True, related_name='tasks')
     dependencies = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='dependents')
+    
+    # Critical Path Method (CPM) fields
+    early_start_day = models.IntegerField(default=0, help_text="Early start day from project start")
+    early_finish_day = models.IntegerField(default=0, help_text="Early finish day from project start")
+    late_start_day = models.IntegerField(default=0, help_text="Late start day from project start")
+    late_finish_day = models.IntegerField(default=0, help_text="Late finish day from project start")
+    total_float = models.IntegerField(default=0, help_text="Total float/slack in days")
+    is_critical = models.BooleanField(default=False, help_text="Is this task on the critical path")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -57,6 +67,14 @@ class Task(models.Model):
     @property
     def is_subtask(self):
         return self.parent_task is not None
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['is_critical', 'project']),
+            models.Index(fields=['total_float', 'project']),
+            models.Index(fields=['early_start_day', 'early_finish_day']),
+        ]
+        ordering = ['id']
 
     def __str__(self):
         return self.title

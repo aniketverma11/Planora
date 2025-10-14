@@ -19,7 +19,8 @@ import {
     Menu,
     MenuItem,
     Divider,
-    LinearProgress
+    LinearProgress,
+    Tooltip
 } from '@mui/material';
 import { 
     ExpandMore, 
@@ -33,7 +34,9 @@ import {
     Edit,
     Delete,
     Add,
-    MoreVert
+    MoreVert,
+    Warning,
+    ErrorOutline
 } from '@mui/icons-material';
 import TaskForm from './TaskForm';
 import { deleteTask } from '../services/api';
@@ -439,6 +442,68 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                     >
                                                         {task.text}
                                                     </Typography>
+                                                    {/* Critical Path Indicators */}
+                                                    {task.is_critical && (
+                                                        <Tooltip 
+                                                            title={
+                                                                <Box sx={{ p: 0.5 }}>
+                                                                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                                                        🔴 Critical Task
+                                                                    </Typography>
+                                                                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                                                        This task is on the critical path with <strong>0 days</strong> of float time.
+                                                                    </Typography>
+                                                                    <Typography variant="body2">
+                                                                        <strong>Why:</strong> Any delay will directly impact the project completion date.
+                                                                    </Typography>
+                                                                    <Typography variant="caption" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
+                                                                        ES: Day {task.early_start_day} | LS: Day {task.late_start_day}
+                                                                    </Typography>
+                                                                </Box>
+                                                            }
+                                                            arrow
+                                                            placement="top"
+                                                        >
+                                                            <ErrorOutline 
+                                                                className="critical-indicator"
+                                                                sx={{ 
+                                                                    color: '#dc2626', 
+                                                                    fontSize: '1.1rem',
+                                                                    cursor: 'help'
+                                                                }} 
+                                                            />
+                                                        </Tooltip>
+                                                    )}
+                                                    {!task.is_critical && task.total_float !== null && task.total_float > 0 && task.total_float <= 2 && (
+                                                        <Tooltip 
+                                                            title={
+                                                                <Box sx={{ p: 0.5 }}>
+                                                                    <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                                                        🟠 Near-Critical Task
+                                                                    </Typography>
+                                                                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                                                        This task has only <strong>{task.total_float} day{task.total_float > 1 ? 's' : ''}</strong> of float time.
+                                                                    </Typography>
+                                                                    <Typography variant="body2">
+                                                                        <strong>Why:</strong> Monitor closely - small delays could make this critical.
+                                                                    </Typography>
+                                                                    <Typography variant="caption" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
+                                                                        ES: Day {task.early_start_day} | LS: Day {task.late_start_day} | Float: {task.total_float}d
+                                                                    </Typography>
+                                                                </Box>
+                                                            }
+                                                            arrow
+                                                            placement="top"
+                                                        >
+                                                            <Warning 
+                                                                sx={{ 
+                                                                    color: '#f59e0b', 
+                                                                    fontSize: '1.1rem',
+                                                                    cursor: 'help'
+                                                                }} 
+                                                            />
+                                                        </Tooltip>
+                                                    )}
                                                     {subtasks.length > 0 && (
                                                         <Chip 
                                                             label={`${subtasks.filter(s => s.progress === 100).length}/${subtasks.length} done`}
@@ -750,6 +815,68 @@ const GanttChart = ({ tasks, onRefresh = () => {} }) => {
                                                             >
                                                                 {subtask.text}
                                                             </Typography>
+                                                            {/* Critical Path Indicators for Subtasks */}
+                                                            {subtask.is_critical && (
+                                                                <Tooltip 
+                                                                    title={
+                                                                        <Box sx={{ p: 0.5 }}>
+                                                                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                                                                🔴 Critical Subtask
+                                                                            </Typography>
+                                                                            <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                                                                Critical with <strong>0 days</strong> float.
+                                                                            </Typography>
+                                                                            <Typography variant="body2">
+                                                                                <strong>Why:</strong> Delays impact project completion.
+                                                                            </Typography>
+                                                                            <Typography variant="caption" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
+                                                                                ES: Day {subtask.early_start_day} | LS: Day {subtask.late_start_day}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                    }
+                                                                    arrow
+                                                                    placement="top"
+                                                                >
+                                                                    <ErrorOutline 
+                                                                        className="critical-indicator"
+                                                                        sx={{ 
+                                                                            color: '#dc2626', 
+                                                                            fontSize: '1rem',
+                                                                            cursor: 'help'
+                                                                        }} 
+                                                                    />
+                                                                </Tooltip>
+                                                            )}
+                                                            {!subtask.is_critical && subtask.total_float !== null && subtask.total_float > 0 && subtask.total_float <= 2 && (
+                                                                <Tooltip 
+                                                                    title={
+                                                                        <Box sx={{ p: 0.5 }}>
+                                                                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                                                                🟠 Near-Critical Subtask
+                                                                            </Typography>
+                                                                            <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                                                                Only <strong>{subtask.total_float} day{subtask.total_float > 1 ? 's' : ''}</strong> float.
+                                                                            </Typography>
+                                                                            <Typography variant="body2">
+                                                                                <strong>Why:</strong> Monitor closely for delays.
+                                                                            </Typography>
+                                                                            <Typography variant="caption" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
+                                                                                ES: Day {subtask.early_start_day} | LS: Day {subtask.late_start_day} | Float: {subtask.total_float}d
+                                                                            </Typography>
+                                                                        </Box>
+                                                                    }
+                                                                    arrow
+                                                                    placement="top"
+                                                                >
+                                                                    <Warning 
+                                                                        sx={{ 
+                                                                            color: '#f59e0b', 
+                                                                            fontSize: '1rem',
+                                                                            cursor: 'help'
+                                                                        }} 
+                                                                    />
+                                                                </Tooltip>
+                                                            )}
                                                             {subtask.priority && (
                                                                 <Chip 
                                                                     label={subtask.priority}

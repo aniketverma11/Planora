@@ -2,11 +2,17 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { MsalProvider } from '@azure/msal-react';
+import { msalInstance } from './config/msalConfig';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ProjectProvider } from './contexts/ProjectContext';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
 import { CircularProgress, Box } from '@mui/material';
+
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
 
 const theme = createTheme({
   palette: {
@@ -57,14 +63,20 @@ const AppRoutes = () => {
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AuthProvider>
-        <Router>
-          <AppRoutes />
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+    <MsalProvider instance={msalInstance}>
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <AuthProvider>
+            <ProjectProvider>
+              <Router>
+                <AppRoutes />
+              </Router>
+            </ProjectProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </GoogleOAuthProvider>
+    </MsalProvider>
   );
 }
 

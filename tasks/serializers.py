@@ -36,6 +36,8 @@ class TaskSerializer(serializers.ModelSerializer):
     parent_task = serializers.PrimaryKeyRelatedField(read_only=True)
     assignee_username = serializers.SerializerMethodField()
     documents = TaskDocumentSerializer(many=True, read_only=True)
+    project_name = serializers.CharField(source='project.name', read_only=True)
+    project_key = serializers.CharField(source='project.key', read_only=True)
 
     class Meta:
         model = Task
@@ -60,6 +62,7 @@ class TaskCreateUpdateSerializer(serializers.Serializer):
     due_date = serializers.DateField(required=False)
     duration = serializers.IntegerField(required=False)
     progress = serializers.IntegerField(required=False)
+    project_id = serializers.IntegerField(required=False, allow_null=True)
     parent_task_id = serializers.IntegerField(required=False, allow_null=True)
     assignee_id = serializers.IntegerField(required=False, allow_null=True)
     dependencies = serializers.PrimaryKeyRelatedField(many=True, queryset=Task.objects.all(), required=False)
@@ -67,6 +70,7 @@ class TaskCreateUpdateSerializer(serializers.Serializer):
     def create(self, validated_data):
         dependencies = validated_data.pop('dependencies', [])
         parent_task_id = validated_data.pop('parent_task_id', None)
+        project_id = validated_data.pop('project_id', None)
         
         # Check if progress was explicitly provided
         has_explicit_progress = 'progress' in validated_data
@@ -78,6 +82,14 @@ class TaskCreateUpdateSerializer(serializers.Serializer):
             except Task.DoesNotExist:
                 pass  # If parent task doesn't exist, create as main task
         
+        if project_id:
+            from project.models import Project
+            try:
+                project = Project.objects.get(id=project_id)
+                validated_data['project'] = project
+            except Project.DoesNotExist:
+                pass  # If project doesn't exist, create task without project
+        
         # Create the task with explicit progress preservation
         task = Task(**validated_data)
         task.save(skip_progress_auto=has_explicit_progress)
@@ -87,6 +99,7 @@ class TaskCreateUpdateSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         dependencies = validated_data.pop('dependencies', None)
         parent_task_id = validated_data.pop('parent_task_id', None)
+        project_id = validated_data.pop('project_id', None)
         
         instance.title = validated_data.get('title', instance.title)
         instance.description = validated_data.get('description', instance.description)
@@ -107,6 +120,17 @@ class TaskCreateUpdateSerializer(serializers.Serializer):
                     instance.parent_task = parent_task
                 except Task.DoesNotExist:
                     pass  # Keep existing parent if new one doesn't exist
+        
+        if project_id is not None:
+            if project_id == '' or project_id == 0:
+                instance.project = None
+            else:
+                from project.models import Project
+                try:
+                    project = Project.objects.get(id=project_id)
+                    instance.project = project
+                except Project.DoesNotExist:
+                    pass  # Keep existing project if new one doesn't exist
             
         # If progress was explicitly provided, skip auto-calculation
         skip_progress_auto = 'progress' in validated_data
