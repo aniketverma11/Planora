@@ -39,6 +39,7 @@ import {
 import GanttChart from './GanttChart';
 import KanbanBoard from './KanbanBoard';
 import ExcelView from './ExcelView';
+import CriticalPathView from './CriticalPathView';
 import TaskForm from './TaskForm';
 import TokenExpiryTimer from './TokenExpiryTimer';
 import HtmlContent from './HtmlContent';
@@ -257,10 +258,23 @@ const Dashboard = () => {
         dependencies: task.dependencies || [],
         documents: task.documents || [],
         project: task.project,
+        // CPM fields for critical path indicators
+        is_critical: task.is_critical || false,
+        total_float: task.total_float,
+        early_start_day: task.early_start_day,
+        early_finish_day: task.early_finish_day,
+        late_start_day: task.late_start_day,
+        late_finish_day: task.late_finish_day,
       }));
       setTasks({ data: formattedTasks });
       console.log('✅ Dashboard: Tasks state updated with', formattedTasks.length, 'tasks');
       console.log('📊 Dashboard: Current tasks state:', { data: formattedTasks });
+      console.log('🎯 Dashboard: CPM data check - Sample task:', formattedTasks[0] ? {
+        text: formattedTasks[0].text,
+        is_critical: formattedTasks[0].is_critical,
+        total_float: formattedTasks[0].total_float,
+        early_start_day: formattedTasks[0].early_start_day
+      } : 'No tasks');
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
     }
@@ -524,6 +538,7 @@ const Dashboard = () => {
               <Tab label="Ticket View" />
               <Tab label="Gantt Chart View" />
               <Tab label="Excel View" />
+              <Tab label="Critical Path" />
             </Tabs>
             {value === 0 && (
               <Button
@@ -552,6 +567,11 @@ const Dashboard = () => {
             <ExcelView 
               projectId={selectedProject?.id} 
               onTaskUpdate={fetchTasks}
+            />
+          </TabPanel>
+          <TabPanel value={value} index={3} noPadding>
+            <CriticalPathView 
+              projectId={selectedProject?.id}
             />
           </TabPanel>
         </Container>

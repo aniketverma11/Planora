@@ -13,6 +13,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, Alignment, PatternFill
 from io import BytesIO
 from datetime import datetime
+from .critical_path import calculate_critical_path
 
 class TaskViewSet(viewsets.ModelViewSet):
     queryset = Task.objects.all()
@@ -418,4 +419,196 @@ class TaskViewSet(viewsets.ModelViewSet):
             return Response(
                 {'error': f'Failed to process Excel file: {str(e)}'}, 
                 status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    @action(detail=False, methods=['get'])
+    def critical_path(self, request):
+        """Get critical path analysis for a project"""
+        project_id = request.query_params.get('project_id')
+        
+        if not project_id:
+            return Response(
+                {'error': 'project_id is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Get all tasks for the project
+            tasks = Task.objects.filter(project_id=project_id).prefetch_related('dependencies', 'dependents')
+            
+            if not tasks.exists():
+                return Response({
+                    'critical_tasks': [],
+                    'critical_paths': [],
+                    'project_duration': 0,
+                    'total_tasks': 0,
+                    'critical_tasks_count': 0,
+                    'message': 'No tasks found for this project'
+                })
+            
+            # Calculate critical path
+            result = calculate_critical_path(tasks)
+            
+            # Serialize critical tasks
+            critical_tasks_data = []
+            for task in result['critical_tasks']:
+                critical_tasks_data.append({
+                    'id': task.id,
+                    'title': task.title,
+                    'description': task.description or '',
+                    'duration': task.duration,
+                    'early_start': task.early_start_day,
+                    'early_finish': task.early_finish_day,
+                    'late_start': task.late_start_day,
+                    'late_finish': task.late_finish_day,
+                    'total_float': task.total_float,
+                    'is_critical': task.is_critical,
+                    'status': task.status,
+                    'progress': task.progress,
+                    'assignee_username': task.assignee.username if task.assignee else None
+                })
+            
+            return Response({
+                'critical_tasks': critical_tasks_data,
+                'critical_paths': result['critical_paths'],
+                'project_duration': result['project_duration'],
+                'earliest_completion': result['earliest_completion'],
+                'latest_completion': result['latest_completion'],
+                'total_tasks': result['total_tasks'],
+                'critical_tasks_count': result['critical_tasks_count'],
+                'risk_level': result['risk_level']
+            })
+            
+        except ValueError as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to calculate critical path: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def calculate_critical_path(self, request):
+        """Calculate and save critical path data for a project"""
+        project_id = request.data.get('project_id')
+        
+        if not project_id:
+            return Response(
+                {'error': 'project_id is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Get all tasks for the project
+            tasks = Task.objects.filter(project_id=project_id).prefetch_related('dependencies', 'dependents')
+            
+            if not tasks.exists():
+                return Response({
+                    'success': False,
+                    'message': 'No tasks found for this project'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Calculate critical path
+            result = calculate_critical_path(tasks)
+            
+            # Save the calculated values to database
+            for task in tasks:
+                task.save(update_fields=[
+                    'early_start_day', 'early_finish_day',
+                    'late_start_day', 'late_finish_day',
+                    'total_float', 'is_critical'
+                ])
+            
+            return Response({
+                'success': True,
+                'message': 'Critical path calculated and saved successfully',
+                'project_duration': result['project_duration'],
+                'critical_tasks_count': result['critical_tasks_count'],
+                'risk_level': result['risk_level']
+            }, status=status.HTTP_200_OK)
+            
+        except ValueError as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to calculate critical path: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'])
+    def float_analysis(self, request):
+        """Get float/slack analysis for all tasks in a project"""
+        project_id = request.query_params.get('project_id')
+        
+        if not project_id:
+            return Response(
+                {'error': 'project_id is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            # Get all tasks for the project
+            tasks = Task.objects.filter(project_id=project_id).prefetch_related('dependencies', 'assignee')
+            
+            if not tasks.exists():
+                return Response({
+                    'critical': [],
+                    'near_critical': [],
+                    'normal': [],
+                    'message': 'No tasks found for this project'
+                })
+            
+            # Calculate critical path to ensure data is up to date
+            calculate_critical_path(tasks)
+            
+            # Categorize tasks by float
+            critical_tasks = []
+            near_critical_tasks = []
+            normal_tasks = []
+            
+            for task in tasks:
+                task_data = {
+                    'id': task.id,
+                    'title': task.title,
+                    'description': task.description or '',
+                    'duration': task.duration,
+                    'total_float': task.total_float,
+                    'early_start': task.early_start_day,
+                    'early_finish': task.early_finish_day,
+                    'late_start': task.late_start_day,
+                    'late_finish': task.late_finish_day,
+                    'status': task.status,
+                    'progress': task.progress,
+                    'assignee_username': task.assignee.username if task.assignee else None
+                }
+                
+                if task.total_float == 0:
+                    critical_tasks.append(task_data)
+                elif task.total_float <= 2:
+                    near_critical_tasks.append(task_data)
+                else:
+                    normal_tasks.append(task_data)
+            
+            return Response({
+                'critical': critical_tasks,
+                'near_critical': near_critical_tasks,
+                'normal': normal_tasks,
+                'summary': {
+                    'critical': len(critical_tasks),
+                    'near_critical': len(near_critical_tasks),
+                    'normal': len(normal_tasks),
+                    'total': len(tasks)
+                }
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to analyze float: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

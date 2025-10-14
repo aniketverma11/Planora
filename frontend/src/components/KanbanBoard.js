@@ -10,14 +10,17 @@ import {
     Menu,
     MenuItem,
     Avatar,
-    LinearProgress
+    LinearProgress,
+    Tooltip
 } from '@mui/material';
 import {
     MoreVert,
     Edit,
     Delete,
     CalendarToday,
-    Timeline
+    Timeline,
+    Warning,
+    ErrorOutline
 } from '@mui/icons-material';
 import {
     DndContext,
@@ -78,17 +81,81 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
                     {...listeners}
                     sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}
                 >
-                    <Typography 
-                        variant="subtitle1" 
-                        sx={{ 
-                            fontWeight: 600, 
-                            color: '#1e293b',
-                            flex: 1,
-                            pr: 1
-                        }}
-                    >
-                        {task.text}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flex: 1 }}>
+                        <Typography 
+                            variant="subtitle1" 
+                            sx={{ 
+                                fontWeight: 600, 
+                                color: '#1e293b',
+                                flex: 1,
+                                pr: 1
+                            }}
+                        >
+                            {task.text}
+                        </Typography>
+                        {/* Critical Path Indicators */}
+                        {task.is_critical && (
+                            <Tooltip 
+                                title={
+                                    <Box sx={{ p: 0.5 }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                            🔴 Critical Task
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                            This task is on the critical path with <strong>0 days</strong> of float time.
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            <strong>Why:</strong> Any delay will directly impact the project completion date.
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
+                                            ES: Day {task.early_start_day} | LS: Day {task.late_start_day}
+                                        </Typography>
+                                    </Box>
+                                }
+                                arrow
+                                placement="top"
+                            >
+                                <ErrorOutline 
+                                    sx={{ 
+                                        color: '#dc2626', 
+                                        fontSize: '1.2rem',
+                                        cursor: 'help',
+                                        animation: 'pulse 2s infinite'
+                                    }} 
+                                />
+                            </Tooltip>
+                        )}
+                        {!task.is_critical && task.total_float !== null && task.total_float > 0 && task.total_float <= 2 && (
+                            <Tooltip 
+                                title={
+                                    <Box sx={{ p: 0.5 }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                            🟠 Near-Critical Task
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ mb: 0.5 }}>
+                                            This task has only <strong>{task.total_float} day{task.total_float > 1 ? 's' : ''}</strong> of float time.
+                                        </Typography>
+                                        <Typography variant="body2">
+                                            <strong>Why:</strong> Monitor closely - small delays could make this critical.
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
+                                            ES: Day {task.early_start_day} | LS: Day {task.late_start_day} | Float: {task.total_float}d
+                                        </Typography>
+                                    </Box>
+                                }
+                                arrow
+                                placement="top"
+                            >
+                                <Warning 
+                                    sx={{ 
+                                        color: '#f59e0b', 
+                                        fontSize: '1.2rem',
+                                        cursor: 'help'
+                                    }} 
+                                />
+                            </Tooltip>
+                        )}
+                    </Box>
                     <IconButton 
                         size="small" 
                         onClick={(e) => {

@@ -130,4 +130,17 @@ export const importTasksFromExcel = (projectId, file) => {
   });
 };
 
+// Critical Path APIs
+export const getCriticalPath = (projectId) => {
+  return api.get(`tasks/critical_path/?project_id=${projectId}`);
+};
+
+export const calculateCriticalPath = (projectId) => {
+  return api.post('tasks/calculate_critical_path/', { project_id: projectId });
+};
+
+export const getFloatAnalysis = (projectId) => {
+  return api.get(`tasks/float_analysis/?project_id=${projectId}`);
+};
+
 export default api;
