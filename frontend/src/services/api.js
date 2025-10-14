@@ -1,9 +1,16 @@
 import axios from 'axios';
 
-const API_URL = 'http://127.0.0.1:8001/api/';
+// Use environment variable or fallback to localhost
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8001/api';
+
+console.log('🌐 API Configuration:', {
+  mode: process.env.NODE_ENV,
+  apiUrl: API_URL,
+  baseURL: API_URL.endsWith('/') ? API_URL : `${API_URL}/`
+});
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL.endsWith('/') ? API_URL : `${API_URL}/`,
 });
 
 // Token expiration checker
