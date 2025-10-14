@@ -64,6 +64,7 @@ api.interceptors.response.use(
 export const login = (credentials) => api.post('users/login/', credentials);
 export const signup = (userData) => api.post('users/signup/', userData);
 export const googleAuth = (token) => api.post('users/google-auth/', { token });
+export const microsoftAuth = (token) => api.post('users/microsoft-auth/', { token });
 export const getUsers = () => api.get('users/');
 
 // Project APIs
@@ -104,5 +105,29 @@ export const uploadDocument = (taskId, file) => {
 
 export const getTaskDocuments = (taskId) => api.get(`tasks/${taskId}/documents/`);
 export const deleteDocument = (taskId, documentId) => api.delete(`tasks/${taskId}/delete_document/${documentId}/`);
+
+// Excel APIs
+export const exportTasksToExcel = (projectId) => {
+  return api.get(`tasks/export_excel/?project_id=${projectId}`, {
+    responseType: 'blob',
+  });
+};
+
+export const downloadSampleExcel = () => {
+  return api.get('tasks/download_sample/', {
+    responseType: 'blob',
+  });
+};
+
+export const importTasksFromExcel = (projectId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('project_id', projectId);
+  return api.post('tasks/import_excel/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
 
 export default api;

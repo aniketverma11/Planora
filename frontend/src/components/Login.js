@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Container,
   Box,
   Typography,
   TextField,
@@ -26,6 +25,7 @@ import {
 import { login as loginAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import GoogleSignInButton from './GoogleSignInButton';
+import MicrosoftSignInButton from './MicrosoftSignInButton';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -283,6 +283,9 @@ const Login = () => {
 
               <Box sx={{ mb: 3 }}>
                 <GoogleSignInButton 
+                  onError={(errorMessage) => setError(errorMessage)}
+                />
+                <MicrosoftSignInButton 
                   onError={(errorMessage) => setError(errorMessage)}
                 />
               </Box>

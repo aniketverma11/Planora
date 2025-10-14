@@ -21,7 +21,6 @@ import {
   FolderOpen as ProjectIcon,
   Add as AddIcon,
   CheckCircle as CheckIcon,
-  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useProject } from '../contexts/ProjectContext';
 import ProjectForm from './ProjectForm';
@@ -34,7 +33,7 @@ const ProjectSelector = ({ open, onClose }) => {
     if (open) {
       fetchProjects();
     }
-  }, [open]);
+  }, [open, fetchProjects]);
 
   const handleSelectProject = (project) => {
     selectProject(project);

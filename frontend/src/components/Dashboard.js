@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
@@ -38,6 +38,7 @@ import {
 } from '@mui/icons-material';
 import GanttChart from './GanttChart';
 import KanbanBoard from './KanbanBoard';
+import ExcelView from './ExcelView';
 import TaskForm from './TaskForm';
 import TokenExpiryTimer from './TokenExpiryTimer';
 import HtmlContent from './HtmlContent';
@@ -73,7 +74,7 @@ const GanttChartView = ({ projectId }) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchAndFormatTasks = async () => {
+    const fetchAndFormatTasks = useCallback(async () => {
         setLoading(true);
         setError(null);
         
@@ -146,7 +147,7 @@ const GanttChartView = ({ projectId }) => {
             } finally {
                 setLoading(false);
             }
-        };
+        }, [projectId]);
 
     useEffect(() => {
         if (projectId) {
@@ -154,7 +155,7 @@ const GanttChartView = ({ projectId }) => {
         } else {
             setData({ data: [], links: [] });
         }
-    }, [projectId]);
+    }, [projectId, fetchAndFormatTasks]);
 
     if (loading) {
         return (
@@ -207,7 +208,7 @@ const Dashboard = () => {
     // Fetch projects when component mounts
     console.log('📂 Dashboard mounted, fetching projects...');
     fetchProjects();
-  }, []);
+  }, [fetchProjects]);
 
   useEffect(() => {
     // Show project selector if no project is selected after projects are loaded
@@ -228,7 +229,7 @@ const Dashboard = () => {
     }
   }, [selectedProject, projectsLoading, projects, user]);
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     if (!selectedProject) {
       console.log('⚠️ Dashboard: No project selected, clearing tasks');
       setTasks({ data: [] });
@@ -263,13 +264,13 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
     }
-  };
+  }, [selectedProject]);
 
   useEffect(() => {
     if (selectedProject) {
       fetchTasks();
     }
-  }, [selectedProject]);
+  }, [selectedProject, fetchTasks]);
 
   const handleTaskClick = (task) => {
     setSelectedTask(task);
@@ -522,6 +523,7 @@ const Dashboard = () => {
             <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
               <Tab label="Ticket View" />
               <Tab label="Gantt Chart View" />
+              <Tab label="Excel View" />
             </Tabs>
             {value === 0 && (
               <Button
@@ -545,6 +547,12 @@ const Dashboard = () => {
           </TabPanel>
           <TabPanel value={value} index={1} noPadding>
             <GanttChartView projectId={selectedProject?.id} />
+          </TabPanel>
+          <TabPanel value={value} index={2}>
+            <ExcelView 
+              projectId={selectedProject?.id} 
+              onTaskUpdate={fetchTasks}
+            />
           </TabPanel>
         </Container>
       )}

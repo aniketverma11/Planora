@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getMyProjects } from '../services/api';
 
 const ProjectContext = createContext();
@@ -31,7 +31,7 @@ export const ProjectProvider = ({ children }) => {
     }
   }, [projects, initialLoadDone]);
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       console.log('🔄 ProjectContext: Fetching projects...');
       setLoading(true);
@@ -44,7 +44,7 @@ export const ProjectProvider = ({ children }) => {
       setLoading(false);
       console.log('✅ ProjectContext: Loading complete');
     }
-  };
+  }, []);
 
   const selectProject = (project) => {
     console.log('📌 ProjectContext: Selecting project:', project.name);
