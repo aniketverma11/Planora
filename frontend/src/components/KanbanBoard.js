@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Paper,
@@ -279,6 +279,16 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
     const [menuAnchor, setMenuAnchor] = useState(null);
     const [selectedTask, setSelectedTask] = useState(null);
 
+    // Debug logging
+    useEffect(() => {
+        console.log('🎯 KanbanBoard: Received tasks prop:', tasks);
+        console.log('🎯 KanbanBoard: tasks.data length:', tasks?.data?.length);
+        console.log('🎯 KanbanBoard: Sample tasks:', tasks?.data?.slice(0, 3));
+        if (tasks?.data?.length > 0) {
+            console.log('🎯 KanbanBoard: Task statuses:', tasks.data.map(t => ({ id: t.id, text: t.text, status: t.status })));
+        }
+    }, [tasks]);
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -294,8 +304,13 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
     };
 
     const getTasksByStatus = (status) => {
-        if (!tasks?.data) return [];
-        return tasks.data.filter(task => task.status === status && (!task.parent || task.parent === 0));
+        if (!tasks?.data) {
+            console.log(`⚠️ KanbanBoard: No tasks.data for status ${status}`);
+            return [];
+        }
+        const filtered = tasks.data.filter(task => task.status === status && (!task.parent || task.parent === 0));
+        console.log(`📊 KanbanBoard: Status "${status}" has ${filtered.length} tasks:`, filtered.map(t => ({ id: t.id, text: t.text })));
+        return filtered;
     };
 
     const handleDragEnd = async (event) => {

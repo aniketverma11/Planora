@@ -72,7 +72,7 @@ export const login = (credentials) => api.post('users/login/', credentials);
 export const signup = (userData) => api.post('users/signup/', userData);
 export const googleAuth = (token) => api.post('users/google-auth/', { token });
 export const microsoftAuth = (token) => api.post('users/microsoft-auth/', { token });
-export const getUsers = () => api.get('users/');
+export const getUsers = () => api.get('users/list/'); // Changed from 'users/' to 'users/list/' to get all users for dropdowns
 
 // Project APIs
 export const getProjects = () => api.get('projects/');

@@ -66,10 +66,30 @@ const ProjectForm = ({ open, onClose, project = null, onSuccess }) => {
 
   const fetchUsers = async () => {
     try {
+      console.log('ProjectForm: Fetching users...');
       const response = await getUsers();
-      setUsers(response.data);
+      console.log('ProjectForm: Raw users response:', response);
+      console.log('ProjectForm: response.data type:', typeof response.data);
+      console.log('ProjectForm: response.data:', response.data);
+      
+      // Handle different response formats
+      let usersArray = [];
+      if (Array.isArray(response.data)) {
+        usersArray = response.data;
+      } else if (response.data?.results && Array.isArray(response.data.results)) {
+        usersArray = response.data.results;
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        usersArray = response.data.data;
+      } else {
+        console.error('ProjectForm: Unexpected response format:', response.data);
+        usersArray = [];
+      }
+      
+      console.log('ProjectForm: Setting users array:', usersArray);
+      setUsers(usersArray);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('ProjectForm: Error fetching users:', error);
+      setUsers([]); // Set empty array on error
     }
   };
 
@@ -129,7 +149,10 @@ const ProjectForm = ({ open, onClose, project = null, onSuccess }) => {
     }
   };
 
-  const selectedUsers = users.filter(user => formData.member_ids.includes(user.id));
+  // Safely filter selected users, ensuring users is always an array
+  const selectedUsers = Array.isArray(users) 
+    ? users.filter(user => formData.member_ids.includes(user.id))
+    : [];
 
   return (
     <Dialog 

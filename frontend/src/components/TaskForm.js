@@ -174,10 +174,30 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = nu
     
     const fetchUsers = async () => {
       try {
-        const { data } = await getUsers();
-        setUsers(data);
+        console.log('TaskForm: Fetching users...');
+        const response = await getUsers();
+        console.log('TaskForm: Raw users response:', response);
+        console.log('TaskForm: response.data type:', typeof response.data);
+        console.log('TaskForm: response.data:', response.data);
+        
+        // Handle different response formats
+        let usersArray = [];
+        if (Array.isArray(response.data)) {
+          usersArray = response.data;
+        } else if (response.data?.results && Array.isArray(response.data.results)) {
+          usersArray = response.data.results;
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          usersArray = response.data.data;
+        } else {
+          console.error('TaskForm: Unexpected response format:', response.data);
+          usersArray = [];
+        }
+        
+        console.log('TaskForm: Setting users array:', usersArray);
+        setUsers(usersArray);
       } catch (error) {
-        console.error('Failed to fetch users:', error);
+        console.error('TaskForm: Failed to fetch users:', error);
+        setUsers([]); // Set empty array on error
       }
     };
     
@@ -859,7 +879,7 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = nu
                     }}
                     renderValue={(selected) => {
                       if (!selected) return <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.95rem' }}>Unassigned</Typography>;
-                      const user = users.find(u => u.id === selected);
+                      const user = Array.isArray(users) ? users.find(u => u.id === selected) : null;
                       return (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Avatar sx={{ width: 20, height: 20, fontSize: '0.7rem', bgcolor: '#0052cc' }}>
@@ -873,7 +893,7 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = nu
                     <MenuItem value="">
                       <Typography variant="body2" color="text.secondary">Unassigned</Typography>
                     </MenuItem>
-                    {users.map((user) => (
+                    {Array.isArray(users) && users.map((user) => (
                       <MenuItem key={user.id} value={user.id}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem', bgcolor: '#1976d2' }}>
