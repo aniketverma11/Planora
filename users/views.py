@@ -224,6 +224,64 @@ class UserManagementViewSet(viewsets.ModelViewSet):
             return UserListSerializer
         return UserSerializer
     
+    def create(self, request, *args, **kwargs):
+        """Create user and send verification email"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Create user without password (will be set via email verification)
+        user = serializer.save()
+        user.set_unusable_password()  # User must set password via email
+        user.email_verified = False
+        user.save()
+        
+        # Generate verification token
+        token = user.generate_verification_token()
+        
+        # Send verification email
+        email_sent = False
+        email_error = None
+        try:
+            from utils.email_service import email_service
+            from utils.email_templates.templates import verification_email_template
+            from django.conf import settings
+            
+            verification_link = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+            html_content = verification_email_template(user, verification_link)
+            
+            print(f"📧 Attempting to send verification email to {user.email}")
+            print(f"🔗 Verification link: {verification_link}")
+            
+            email_sent = email_service.send_email(
+                to_email=user.email,
+                subject='Welcome to Task Management System - Verify Your Email',
+                html_content=html_content
+            )
+            
+            if email_sent:
+                print(f"✅ Verification email sent successfully to {user.email}")
+            else:
+                print(f"❌ Failed to send verification email to {user.email}")
+                email_error = "Email service returned False"
+                
+        except Exception as e:
+            email_error = str(e)
+            print(f"❌ Error sending verification email: {email_error}")
+            import traceback
+            traceback.print_exc()
+        
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            {
+                'message': 'User created successfully. Verification email sent.' if email_sent else f'User created but email failed: {email_error}',
+                'user': serializer.data,
+                'email_sent': email_sent,
+                'verification_link': f"{settings.FRONTEND_URL}/verify-email?token={token}" if not email_sent else None  # Include link if email fails
+            },
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+    
     def get_queryset(self):
         """Allow filtering and searching users"""
         queryset = CustomUser.objects.all().order_by("-date_joined")
@@ -366,23 +424,45 @@ class UserManagementViewSet(viewsets.ModelViewSet):
                 
                 try:
                     # Create user
-                    user_data = {
-                        'username': username,
-                        'email': email,
-                        'first_name': first_name or '',
-                        'last_name': last_name or '',
-                        'designation': 'user',  # Default designation
-                    }
+                    user = CustomUser.objects.create(
+                        username=username,
+                        email=email,
+                        first_name=first_name or '',
+                        last_name=last_name or '',
+                        designation='user',  # Default designation
+                        email_verified=False
+                    )
                     
-                    # Set password
+                    # If password provided, set it and mark as verified
                     if password:
-                        user_data['password'] = make_password(password)
+                        user.set_password(password)
+                        user.email_verified = True
+                        user.save()
                     else:
-                        # Generate random password if not provided
-                        random_password = secrets.token_urlsafe(12)
-                        user_data['password'] = make_password(random_password)
+                        # No password provided, send verification email
+                        user.set_unusable_password()
+                        user.save()
+                        
+                        # Generate verification token
+                        token = user.generate_verification_token()
+                        
+                        # Send verification email
+                        try:
+                            from utils.email_service import email_service
+                            from utils.email_templates.templates import verification_email_template
+                            from django.conf import settings
+                            
+                            verification_link = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+                            html_content = verification_email_template(user, verification_link)
+                            
+                            email_service.send_email(
+                                to_email=user.email,
+                                subject='Welcome to Task Management System - Verify Your Email',
+                                html_content=html_content
+                            )
+                        except Exception as email_error:
+                            print(f"❌ Error sending verification email to {user.email}: {str(email_error)}")
                     
-                    CustomUser.objects.create(**user_data)
                     created_count += 1
                     
                 except Exception as e:
@@ -516,6 +596,63 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename=sample_user_import_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
         
         return response
+    
+    @action(detail=True, methods=['post'], url_path='resend-verification')
+    def resend_verification_email(self, request, pk=None):
+        """
+        Resend verification email to a specific user
+        """
+        user = self.get_object()
+        
+        # Check if user is already verified
+        if user.email_verified:
+            return Response(
+                {'error': 'User email is already verified.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Check if user has a usable password
+        if user.has_usable_password():
+            return Response(
+                {'error': 'User already has a password set.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from utils.email_service import email_service
+            from utils.email_templates.templates import verification_email_template
+            from django.conf import settings
+            
+            # Generate new verification token
+            token = user.generate_verification_token()
+            
+            # Create verification link
+            verification_link = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+            html_content = verification_email_template(user, verification_link)
+            
+            # Send email
+            email_sent = email_service.send_email(
+                to_email=user.email,
+                subject='Welcome to Task Management System - Verify Your Email',
+                html_content=html_content
+            )
+            
+            if email_sent:
+                return Response({
+                    'message': f'Verification email sent successfully to {user.email}',
+                    'email': user.email
+                })
+            else:
+                return Response(
+                    {'error': 'Failed to send email. Please try again.'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to send verification email: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class CurrentUserView(APIView):
@@ -527,3 +664,247 @@ class CurrentUserView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+class VerifyEmailView(APIView):
+    """
+    Verify email and allow password setup
+    """
+    permission_classes = (permissions.AllowAny,)
+    
+    def post(self, request):
+        try:
+            token = request.data.get('token')
+            password = request.data.get('password')
+            
+            if not token:
+                return Response(
+                    {'error': 'Verification token is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Find user with this token
+            user = CustomUser.objects.filter(verification_token=token).first()
+            
+            if not user:
+                return Response(
+                    {'error': 'Invalid verification token'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if token is still valid
+            if not user.is_verification_token_valid():
+                return Response(
+                    {'error': 'Verification token has expired. Please request a new one.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # If password is provided, set it
+            if password:
+                user.set_password(password)
+            
+            # Mark email as verified
+            user.email_verified = True
+            user.verification_token = None
+            user.verification_token_created_at = None
+            user.save()
+            
+            # Send success confirmation email
+            try:
+                from utils.email_service import email_service
+                from utils.email_templates.templates import email_verification_success_template
+                from django.conf import settings
+                
+                login_url = f"{settings.FRONTEND_URL}/login"
+                html_content = email_verification_success_template(user, login_url)
+                
+                email_service.send_email(
+                    to_email=user.email,
+                    subject='Welcome! Your Account is Now Active',
+                    html_content=html_content
+                )
+                print(f"✅ Verification success email sent to {user.email}")
+            except Exception as email_error:
+                print(f"❌ Failed to send verification success email: {str(email_error)}")
+                # Don't fail the verification if email fails
+            
+            return Response({
+                'message': 'Email verified successfully',
+                'username': user.username,
+                'email': user.email
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ResendVerificationEmailView(APIView):
+    """
+    Resend verification email if expired or lost
+    """
+    permission_classes = (permissions.AllowAny,)
+    
+    def post(self, request):
+        try:
+            email = request.data.get('email')
+            
+            if not email:
+                return Response(
+                    {'error': 'Email is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Find user with this email
+            user = CustomUser.objects.filter(email=email).first()
+            
+            if not user:
+                return Response(
+                    {'error': 'No user found with this email'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Check if already verified
+            if user.email_verified:
+                return Response(
+                    {'error': 'Email is already verified. You can log in.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Generate new verification token
+            token = user.generate_verification_token()
+            
+            # Send verification email
+            from utils.email_service import email_service
+            from utils.email_templates.templates import verification_email_template
+            from django.conf import settings
+            
+            verification_link = f"{settings.FRONTEND_URL}/verify-email?token={token}"
+            html_content = verification_email_template(user, verification_link)
+            
+            success = email_service.send_email(
+                to_email=user.email,
+                subject='Verify Your Email - Task Management System',
+                html_content=html_content
+            )
+            
+            if success:
+                return Response({
+                    'message': 'Verification email sent successfully. Please check your inbox.'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {'error': 'Failed to send verification email. Please try again later.'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class CheckVerificationTokenView(APIView):
+    """
+    Check if verification token is valid
+    """
+    permission_classes = (permissions.AllowAny,)
+    
+    def get(self, request):
+        try:
+            token = request.query_params.get('token')
+            
+            if not token:
+                return Response(
+                    {'error': 'Token is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            user = CustomUser.objects.filter(verification_token=token).first()
+            
+            if not user:
+                return Response({
+                    'valid': False,
+                    'message': 'Invalid token'
+                }, status=status.HTTP_200_OK)
+            
+            is_valid = user.is_verification_token_valid()
+            
+            return Response({
+                'valid': is_valid,
+                'message': 'Token is valid' if is_valid else 'Token has expired',
+                'email': user.email if is_valid else None,
+                'username': user.username if is_valid else None
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class TestEmailConfigView(APIView):
+    """
+    Test email configuration (admin only for POST, public for GET)
+    """
+    permission_classes = [permissions.AllowAny]  # Allow anyone to check config
+    
+    def get(self, request):
+        """Check if email is configured"""
+        from django.conf import settings
+        
+        config_status = {
+            'azure_client_id_set': bool(settings.AZURE_CLIENT_ID),
+            'azure_client_secret_set': bool(settings.AZURE_CLIENT_SECRET),
+            'azure_tenant_id_set': bool(settings.AZURE_TENANT_ID),
+            'azure_sender_email': settings.AZURE_SENDER_EMAIL,
+            'frontend_url': settings.FRONTEND_URL,
+            'email_verification_hours': settings.EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS,
+        }
+        
+        return Response(config_status)
+    
+    def post(self, request):
+        """Send a test email - admin only"""
+        # Check if user is admin
+        if not (request.user and request.user.is_authenticated and request.user.designation == 'admin'):
+            return Response(
+                {'error': 'Admin access required'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            from utils.email_service import email_service
+            
+            test_email = request.data.get('email', request.user.email)
+            
+            html_content = """
+            <h1>Test Email</h1>
+            <p>This is a test email from the Task Management System.</p>
+            <p>If you received this, email configuration is working correctly!</p>
+            """
+            
+            success = email_service.send_email(
+                to_email=test_email,
+                subject='Test Email - Task Management System',
+                html_content=html_content
+            )
+            
+            if success:
+                return Response({
+                    'message': f'Test email sent successfully to {test_email}'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'Failed to send test email'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except Exception as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

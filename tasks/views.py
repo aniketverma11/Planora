@@ -38,6 +38,64 @@ class TaskViewSet(viewsets.ModelViewSet):
         
         return queryset
     
+    def perform_create(self, serializer):
+        """Send email notification when task is created with an assignee"""
+        task = serializer.save()
+        
+        # Send email if task has an assignee
+        if task.assignee and task.assignee.email:
+            try:
+                from utils.email_service import email_service
+                from utils.email_templates.templates import task_assignment_email_template
+                
+                html_content = task_assignment_email_template(
+                    user=task.assignee,
+                    task=task,
+                    project=task.project,
+                    assigned_by=self.request.user
+                )
+                
+                email_service.send_email(
+                    to_email=task.assignee.email,
+                    subject=f'New Task Assigned: {task.title}',
+                    html_content=html_content
+                )
+                print(f"✅ Task assignment email sent to {task.assignee.email}")
+            except Exception as e:
+                print(f"❌ Failed to send task assignment email: {str(e)}")
+    
+    def perform_update(self, serializer):
+        """Send email notification when task assignee is changed"""
+        # Get the old task before update
+        old_task = self.get_object()
+        old_assignee = old_task.assignee
+        
+        # Save the updated task
+        task = serializer.save()
+        new_assignee = task.assignee
+        
+        # Send email if assignee was added or changed
+        if new_assignee and new_assignee != old_assignee and new_assignee.email:
+            try:
+                from utils.email_service import email_service
+                from utils.email_templates.templates import task_assignment_email_template
+                
+                html_content = task_assignment_email_template(
+                    user=new_assignee,
+                    task=task,
+                    project=task.project,
+                    assigned_by=self.request.user
+                )
+                
+                email_service.send_email(
+                    to_email=new_assignee.email,
+                    subject=f'Task Assigned: {task.title}',
+                    html_content=html_content
+                )
+                print(f"✅ Task assignment email sent to {new_assignee.email}")
+            except Exception as e:
+                print(f"❌ Failed to send task assignment email: {str(e)}")
+    
     @action(detail=True, methods=['get'])
     def subtasks(self, request, pk=None):
         """Get all subtasks for a specific task"""

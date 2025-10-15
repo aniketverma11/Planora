@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, TextField, InputAdornment,
@@ -8,7 +9,8 @@ import {
 import {
   Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon,
   Search as SearchIcon, Download as DownloadIcon,
-  FileUpload as UploadIcon, Description as TemplateIcon
+  FileUpload as UploadIcon, Description as TemplateIcon,
+  Email as EmailIcon, ArrowBack as ArrowBackIcon
 } from '@mui/icons-material';
 import { importUsersFromExcel, exportUsersToExcel, downloadUserSampleExcel } from '../services/api';
 import api from '../services/api';
@@ -16,6 +18,7 @@ import UserForm from './UserForm';
 import { saveAs } from 'file-saver';
 
 const UserManagement = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -199,6 +202,23 @@ const UserManagement = () => {
     }
   };
 
+  const handleResendVerificationEmail = async (user) => {
+    try {
+      setError('');
+      setSuccess('');
+      
+      const response = await api.post(`/users/manage/${user.id}/resend-verification/`);
+      
+      setSuccess(response.data.message || `Verification email sent to ${user.email}`);
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (err) {
+      console.error('Resend verification failed:', err);
+      const errorMsg = err.response?.data?.error || 'Failed to resend verification email';
+      setError(errorMsg);
+      setTimeout(() => setError(''), 5000);
+    }
+  };
+
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
@@ -252,9 +272,19 @@ const UserManagement = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        User Management
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <IconButton
+          onClick={() => navigate('/dashboard')}
+          sx={{ mr: 2 }}
+          color="primary"
+          title="Back to Dashboard"
+        >
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+          User Management
+        </Typography>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -356,6 +386,7 @@ const UserManagement = () => {
                 <TableCell>Name</TableCell>
                 <TableCell>Designation</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Email Verified</TableCell>
                 <TableCell>Permissions</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -363,7 +394,7 @@ const UserManagement = () => {
             <TableBody>
               {users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     No users found
                   </TableCell>
                 </TableRow>
@@ -387,20 +418,40 @@ const UserManagement = () => {
                         size="small"
                       />
                     </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={user.email_verified ? 'Verified' : 'Pending'}
+                        color={user.email_verified ? 'success' : 'warning'}
+                        size="small"
+                        icon={user.email_verified ? <EmailIcon /> : null}
+                      />
+                    </TableCell>
                     <TableCell>{user.permission_count || 0}</TableCell>
                     <TableCell align="right">
                       <IconButton
                         color="primary"
                         onClick={() => handleEditUser(user)}
                         size="small"
+                        title="Edit User"
                       >
                         <EditIcon />
                       </IconButton>
+                      {!user.email_verified && (
+                        <IconButton
+                          color="secondary"
+                          onClick={() => handleResendVerificationEmail(user)}
+                          size="small"
+                          title="Resend Verification Email"
+                        >
+                          <EmailIcon />
+                        </IconButton>
+                      )}
                       <IconButton
                         color="error"
                         onClick={() => handleDeleteClick(user)}
                         size="small"
                         disabled={user.id === currentUser?.id}
+                        title="Delete User"
                       >
                         <DeleteIcon />
                       </IconButton>

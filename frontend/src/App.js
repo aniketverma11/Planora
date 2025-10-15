@@ -9,6 +9,7 @@ import Login from './components/Login';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
 import UserManagement from './components/UserManagement';
+import VerifyEmail from './components/VerifyEmail';
 import { CircularProgress, Box } from '@mui/material';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
@@ -49,6 +50,7 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
       <Route
         path="/dashboard"
         element={

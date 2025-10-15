@@ -185,4 +185,16 @@ SIMPLE_JWT = {
     'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
+
 AUTH_USER_MODEL = 'users.CustomUser'
+
+# Microsoft Graph API Email Configuration
+AZURE_CLIENT_ID = config('AZURE_CLIENT_ID', default='')
+AZURE_CLIENT_SECRET = config('AZURE_CLIENT_SECRET', default='')
+AZURE_TENANT_ID = config('AZURE_TENANT_ID', default='')
+AZURE_SENDER_EMAIL = config('AZURE_SENDER_EMAIL', default='BR_UBR_Malaysia@coforge.com')
+
+# Email Verification Settings
+EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS = 24
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+

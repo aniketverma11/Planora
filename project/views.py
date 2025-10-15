@@ -53,6 +53,28 @@ class ProjectViewSet(viewsets.ModelViewSet):
             from users.models import CustomUser
             user = CustomUser.objects.get(id=user_id)
             project.members.add(user)
+            
+            # Send email notification to the added user
+            if user.email:
+                try:
+                    from utils.email_service import email_service
+                    from utils.email_templates.templates import project_team_addition_email_template
+                    
+                    html_content = project_team_addition_email_template(
+                        user=user,
+                        project=project,
+                        added_by=request.user
+                    )
+                    
+                    email_service.send_email(
+                        to_email=user.email,
+                        subject=f'Added to Project: {project.name}',
+                        html_content=html_content
+                    )
+                    print(f"✅ Project team addition email sent to {user.email}")
+                except Exception as e:
+                    print(f"❌ Failed to send project team email: {str(e)}")
+            
             return Response({'message': f'User {user.username} added successfully'})
         except CustomUser.DoesNotExist:
             return Response(

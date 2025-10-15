@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -28,6 +28,7 @@ import GoogleSignInButton from './GoogleSignInButton';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
@@ -35,8 +36,19 @@ const Login = () => {
     password: '',
   });
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Check for success message from email verification
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      if (location.state.email) {
+        setFormData(prev => ({ ...prev, username: location.state.email }));
+      }
+    }
+  }, [location.state]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -48,6 +60,7 @@ const Login = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
+    setSuccessMessage('');
   };
 
   const handleSubmit = async (e) => {
@@ -153,6 +166,23 @@ const Login = () => {
 
           {/* Form Section */}
           <Box sx={{ px: 4, pb: 5 }}>
+            {successMessage && (
+              <Alert 
+                severity="success" 
+                sx={{ 
+                  mb: 3,
+                  borderRadius: 2,
+                  animation: 'slideDown 0.3s ease-out',
+                  '@keyframes slideDown': {
+                    from: { opacity: 0, transform: 'translateY(-10px)' },
+                    to: { opacity: 1, transform: 'translateY(0)' },
+                  },
+                }}
+              >
+                {successMessage}
+              </Alert>
+            )}
+
             {error && (
               <Alert 
                 severity="error" 

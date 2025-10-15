@@ -87,7 +87,7 @@ class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('id', 'username', 'email', 'first_name', 'last_name', 
-                  'designation', 'is_active', 'permission_count')
+                  'designation', 'is_active', 'email_verified', 'permission_count')
     
     def get_permission_count(self, obj):
         return obj.user_permissions.count()
