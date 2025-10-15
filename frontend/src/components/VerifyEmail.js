@@ -54,7 +54,7 @@ const VerifyEmail = () => {
 
       try {
         const response = await axios.get(
-          `http://127.0.0.1:8001/api/users/check-token/?token=${token}`
+          `${process.env.REACT_APP_API_URL}/users/check-token/?token=${token}`
         );
         
         if (response.data.valid) {
@@ -98,13 +98,13 @@ const VerifyEmail = () => {
     setSubmitting(true);
 
     try {
-      const response = await axios.post(
-        'http://127.0.0.1:8001/api/users/verify-email/',
-        {
-          token: token,
-          password: password,
-        }
-      );
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL}/users/verify-email/`,
+      {
+        token: token,
+        password: password,
+      }
+    );
 
       setSuccess(response.data.message || 'Email verified successfully!');
       
@@ -140,10 +140,10 @@ const VerifyEmail = () => {
     setSuccess('');
 
     try {
-      const response = await axios.post(
-        'http://127.0.0.1:8001/api/users/resend-verification/',
-        { email: resendEmail }
-      );
+    const response = await axios.post(
+      `${process.env.REACT_APP_API_URL}/users/resend-verification/`,
+      { email: resendEmail }
+    );
 
       setSuccess(response.data.message || 'Verification email sent! Please check your inbox.');
       setResendEmail('');
