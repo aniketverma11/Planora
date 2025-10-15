@@ -425,3 +425,98 @@ def email_verification_success_template(user, login_url):
         </div>
     """
     return get_base_template(content)
+
+
+def task_status_change_email_template(task, old_status, new_status, changed_by_user):
+    """
+    Email template for task status change notifications
+    Sent to both task creator and assignee
+    """
+    # Determine status color
+    status_colors = {
+        'To Do': '#6c757d',
+        'In Progress': '#ffc107',
+        'Done': '#28a745'
+    }
+    new_status_color = status_colors.get(new_status, '#667eea')
+    
+    content = f"""
+        <div class="email-body">
+            <h2 style="color: #495057; margin-top: 0;">📋 Task Status Updated</h2>
+            
+            <p style="font-size: 16px; color: #6c757d;">
+                The status of a task you're involved with has been changed.
+            </p>
+            
+            <div class="info-box">
+                <h3 style="margin-top: 0; color: #495057;">Task Details</h3>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Task:</span>
+                    <span class="detail-value" style="font-weight: 600;">{task.title}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Previous Status:</span>
+                    <span class="detail-value">{old_status or 'None'}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">New Status:</span>
+                    <span class="detail-value" style="color: {new_status_color}; font-weight: 600;">
+                        {new_status}
+                    </span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Changed By:</span>
+                    <span class="detail-value">{changed_by_user.get_full_name() or changed_by_user.username}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Project:</span>
+                    <span class="detail-value">{task.project.name if task.project else 'No Project'}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Priority:</span>
+                    <span class="detail-value">{task.priority}</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Due Date:</span>
+                    <span class="detail-value">{task.due_date.strftime('%B %d, %Y') if task.due_date else 'Not set'}</span>
+                </div>
+                
+                <div class="detail-row" style="border-bottom: none;">
+                    <span class="detail-label">Assigned To:</span>
+                    <span class="detail-value">{task.assignee.get_full_name() if task.assignee else 'Unassigned'}</span>
+                </div>
+            </div>
+            
+            {f'<div style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0;"><strong>Description:</strong><br/>{task.description}</div>' if task.description else ''}
+            
+            <table cellpadding="0" cellspacing="0" border="0" style="margin: 30px auto;">
+                <tr>
+                    <td align="center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; padding: 0;">
+                        <a href="{settings.FRONTEND_URL}/dashboard" 
+                           style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px;">
+                            View Task Details
+                        </a>
+                    </td>
+                </tr>
+            </table>
+            
+            <p style="text-align: center; color: #6c757d; font-size: 13px; margin-top: 20px;">
+                Or copy and paste this link in your browser:<br/>
+                <a href="{settings.FRONTEND_URL}/dashboard" style="color: #667eea; word-break: break-all;">{settings.FRONTEND_URL}/dashboard</a>
+            </p>
+            
+            <div class="divider"></div>
+            
+            <p style="color: #6c757d; font-size: 14px;">
+                Stay updated with your tasks and keep your team informed.
+            </p>
+        </div>
+    """
+    return get_base_template(content)

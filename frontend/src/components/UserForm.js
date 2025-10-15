@@ -136,10 +136,8 @@ const UserForm = ({ open, user, onClose, onSubmit }) => {
       errors.email = 'Invalid email format';
     }
     
-    if (!user && !formData.password) {
-      errors.password = 'Password is required for new users';
-    }
-    
+    // Password is optional for new users (they'll receive verification email)
+    // Only validate length if password is provided
     if (formData.password && formData.password.length < 8) {
       errors.password = 'Password must be at least 8 characters';
     }
@@ -270,13 +268,16 @@ const UserForm = ({ open, user, onClose, onSubmit }) => {
                 <TextField
                   fullWidth
                   type="password"
-                  label={user ? 'New Password (leave blank to keep current)' : 'Password'}
+                  label={user ? 'New Password (leave blank to keep current)' : 'Password (Optional)'}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  required={!user}
+                  required={false}
                   error={!!validationErrors.password}
-                  helperText={validationErrors.password || (user ? 'Only enter if changing password' : 'Min 8 characters')}
+                  helperText={
+                    validationErrors.password || 
+                    (user ? 'Only enter if changing password' : 'Leave blank to send verification email. User will set password via email.')
+                  }
                 />
               </Grid>
 

@@ -563,9 +563,9 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         
         # Add sample data
         sample_data = [
-            ['john.doe', 'John', 'Doe', 'john.doe@example.com', 'password123'],
-            ['jane.smith', 'Jane', 'Smith', 'jane.smith@example.com', ''],  # Empty password will be auto-generated
-            ['bob.wilson', 'Bob', 'Wilson', 'bob.wilson@example.com', 'secure456'],
+            ['john.doe', 'John', 'Doe', 'john.doe@example.com', ''],  # No password - will receive verification email
+            ['jane.smith', 'Jane', 'Smith', 'jane.smith@example.com', ''],  # No password - recommended approach
+            ['bob.wilson', 'Bob', 'Wilson', 'bob.wilson@example.com', 'SecurePass123'],  # With password (optional)
         ]
         
         for row_num, data in enumerate(sample_data, start=2):
@@ -575,9 +575,10 @@ class UserManagementViewSet(viewsets.ModelViewSet):
         # Add instructions
         ws.cell(row=6, column=1, value='Instructions:')
         ws.cell(row=7, column=1, value='1. Fill in Username, First Name, Last Name, and Email (required)')
-        ws.cell(row=8, column=1, value='2. Password is optional - if empty, a random password will be generated')
-        ws.cell(row=9, column=1, value='3. Remove sample data before importing')
-        ws.cell(row=10, column=1, value='4. Save and upload this file')
+        ws.cell(row=8, column=1, value='2. Password is OPTIONAL - leave blank to send verification email (RECOMMENDED)')
+        ws.cell(row=9, column=1, value='3. If password is blank, user will receive email to set their own password')
+        ws.cell(row=10, column=1, value='4. Remove sample data before importing')
+        ws.cell(row=11, column=1, value='5. Save and upload this file')
         
         # Adjust column widths
         for col in range(1, len(headers) + 1):

@@ -35,6 +35,7 @@ class TaskSerializer(serializers.ModelSerializer):
     dependencies = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     parent_task = serializers.PrimaryKeyRelatedField(read_only=True)
     assignee_username = serializers.SerializerMethodField()
+    created_by_username = serializers.SerializerMethodField()
     documents = TaskDocumentSerializer(many=True, read_only=True)
     project_name = serializers.CharField(source='project.name', read_only=True)
     project_key = serializers.CharField(source='project.key', read_only=True)
@@ -51,6 +52,11 @@ class TaskSerializer(serializers.ModelSerializer):
     def get_assignee_username(self, obj):
         if obj.assignee:
             return obj.assignee.username
+        return None
+    
+    def get_created_by_username(self, obj):
+        if obj.created_by:
+            return obj.created_by.username
         return None
 
 class TaskCreateUpdateSerializer(serializers.Serializer):

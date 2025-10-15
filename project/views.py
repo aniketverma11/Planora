@@ -55,7 +55,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project.members.add(user)
             
             # Send email notification to the added user
-            if user.email:
+            if user.email and user.email_verified:
                 try:
                     from utils.email_service import email_service
                     from utils.email_templates.templates import project_team_addition_email_template
@@ -66,14 +66,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
                         added_by=request.user
                     )
                     
-                    email_service.send_email(
+                    result = email_service.send_email(
                         to_email=user.email,
                         subject=f'Added to Project: {project.name}',
                         html_content=html_content
                     )
-                    print(f"✅ Project team addition email sent to {user.email}")
+                    
+                    if result:
+                        print(f"✅ Project team addition email sent to {user.email}")
+                    else:
+                        print(f"❌ Email service returned False for {user.email}")
                 except Exception as e:
                     print(f"❌ Failed to send project team email: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                if not user.email:
+                    print(f"⚠️ User {user.username} has no email address")
+                elif not user.email_verified:
+                    print(f"⚠️ User {user.username} email not verified: {user.email}")
             
             return Response({'message': f'User {user.username} added successfully'})
         except CustomUser.DoesNotExist:

@@ -26,6 +26,7 @@ class Task(models.Model):
     project = models.ForeignKey('project.Project', on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     parent_task = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True, related_name='subtasks')
     assignee = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, blank=True, null=True, related_name='tasks')
+    created_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, blank=True, null=True, related_name='created_tasks')
     dependencies = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='dependents')
     
     # Critical Path Method (CPM) fields

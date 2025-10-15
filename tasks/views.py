@@ -40,7 +40,8 @@ class TaskViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """Send email notification when task is created with an assignee"""
-        task = serializer.save()
+        # Set created_by to the current user
+        task = serializer.save(created_by=self.request.user)
         
         # Send email if task has an assignee
         if task.assignee and task.assignee.email:
@@ -65,14 +66,16 @@ class TaskViewSet(viewsets.ModelViewSet):
                 print(f"❌ Failed to send task assignment email: {str(e)}")
     
     def perform_update(self, serializer):
-        """Send email notification when task assignee is changed"""
+        """Send email notifications when task assignee or status is changed"""
         # Get the old task before update
         old_task = self.get_object()
         old_assignee = old_task.assignee
+        old_status = old_task.status
         
         # Save the updated task
         task = serializer.save()
         new_assignee = task.assignee
+        new_status = task.status
         
         # Send email if assignee was added or changed
         if new_assignee and new_assignee != old_assignee and new_assignee.email:
@@ -95,6 +98,49 @@ class TaskViewSet(viewsets.ModelViewSet):
                 print(f"✅ Task assignment email sent to {new_assignee.email}")
             except Exception as e:
                 print(f"❌ Failed to send task assignment email: {str(e)}")
+        
+        # Send email if status was changed
+        if new_status != old_status:
+            try:
+                from utils.email_service import email_service
+                from utils.email_templates.templates import task_status_change_email_template
+                
+                # Collect recipients (created_by and assignee)
+                recipients = []
+                
+                # Add created_by user
+                if task.created_by and task.created_by.email and task.created_by.email_verified:
+                    recipients.append({
+                        'email': task.created_by.email,
+                        'name': task.created_by.get_full_name() or task.created_by.username
+                    })
+                
+                # Add assignee if different from created_by
+                if task.assignee and task.assignee.email and task.assignee.email_verified:
+                    if not task.created_by or task.assignee.id != task.created_by.id:
+                        recipients.append({
+                            'email': task.assignee.email,
+                            'name': task.assignee.get_full_name() or task.assignee.username
+                        })
+                
+                # Send email to all recipients
+                html_content = task_status_change_email_template(
+                    task=task,
+                    old_status=old_status,
+                    new_status=new_status,
+                    changed_by_user=self.request.user
+                )
+                
+                for recipient in recipients:
+                    email_service.send_email(
+                        to_email=recipient['email'],
+                        subject=f'Task Status Changed: {task.title}',
+                        html_content=html_content
+                    )
+                    print(f"✅ Status change email sent to {recipient['name']} ({recipient['email']})")
+                    
+            except Exception as e:
+                print(f"❌ Failed to send status change email: {str(e)}")
     
     @action(detail=True, methods=['get'])
     def subtasks(self, request, pk=None):

@@ -531,8 +531,13 @@ const UserManagement = () => {
               <li><Typography variant="body2"><strong>First Name</strong> (required)</Typography></li>
               <li><Typography variant="body2"><strong>Last Name</strong> (required)</Typography></li>
               <li><Typography variant="body2"><strong>Email</strong> (required)</Typography></li>
-              <li><Typography variant="body2"><strong>Password</strong> (optional - random password generated if empty)</Typography></li>
+              <li><Typography variant="body2"><strong>Password</strong> (optional - if empty, user receives verification email to set password)</Typography></li>
             </Box>
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2">
+                <strong>Recommended:</strong> Leave password blank. Users will receive a verification email with a link to set their own password securely.
+              </Typography>
+            </Alert>
           </Box>
 
           <Button
