@@ -55,20 +55,38 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      setError('');
       const params = {};
       if (searchTerm) params.search = searchTerm;
       if (filterDesignation) params.designation = filterDesignation;
 
+      console.log('Fetching users with params:', params);
       const response = await api.get('/users/manage/', { params });
-      console.log('API Response:', response.data);
+      console.log('Full API Response:', response);
+      console.log('Response data:', response.data);
+      console.log('Response data type:', typeof response.data);
+      console.log('Is array?', Array.isArray(response.data));
       
       // Handle both array and object responses
-      const userData = Array.isArray(response.data) ? response.data : (response.data.results || []);
+      let userData;
+      if (Array.isArray(response.data)) {
+        userData = response.data;
+      } else if (response.data && response.data.results) {
+        userData = response.data.results;
+      } else if (response.data && typeof response.data === 'object') {
+        // If it's an object but not an array, wrap it
+        userData = [response.data];
+      } else {
+        userData = [];
+      }
+      
+      console.log('Setting users to:', userData);
+      console.log('User count:', userData.length);
       setUsers(userData);
-      setError('');
     } catch (err) {
       console.error('Error fetching users:', err);
-      setError(err.response?.data?.detail || 'Failed to fetch users');
+      console.error('Error response:', err.response);
+      setError(err.response?.data?.detail || err.message || 'Failed to fetch users');
     } finally {
       setLoading(false);
     }
