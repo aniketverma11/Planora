@@ -55,6 +55,8 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
 
     const subtaskCount = getSubtaskCount(task.id);
     const completedSubtasks = getCompletedSubtasks(task.id);
+    const validStatuses = ['To Do', 'In Progress', 'Done'];
+    const hasInvalidStatus = !task.status || !validStatuses.includes(task.status);
 
     return (
         <Card
@@ -72,11 +74,37 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                 },
                 transition: 'box-shadow 0.2s',
-                border: '1px solid #e2e8f0'
+                border: hasInvalidStatus ? '2px solid #dc2626' : '1px solid #e2e8f0'
             }}
             onClick={() => onTaskClick(task)}
         >
             <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                {/* Invalid Status Warning */}
+                {hasInvalidStatus && (
+                    <Box 
+                        sx={{ 
+                            mb: 2, 
+                            p: 1.5, 
+                            bgcolor: '#fef2f2', 
+                            border: '1px solid #fecaca',
+                            borderRadius: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                        }}
+                    >
+                        <Warning sx={{ color: '#dc2626', fontSize: '1.2rem' }} />
+                        <Box sx={{ flex: 1 }}>
+                            <Typography variant="subtitle2" sx={{ color: '#dc2626', fontWeight: 600, mb: 0.5 }}>
+                                Invalid Status
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#7f1d1d' }}>
+                                Current status: "{task.status || 'None'}" - Please edit this task and set a valid status (To Do, In Progress, or Done)
+                            </Typography>
+                        </Box>
+                    </Box>
+                )}
+                
                 <Box 
                     {...listeners}
                     sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}
@@ -297,10 +325,13 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
         })
     );
 
+    const validStatuses = ['To Do', 'In Progress', 'Done'];
+
     const columns = {
         'To Do': { status: 'To Do', color: '#64748b' },
         'In Progress': { status: 'In Progress', color: '#f59e0b' },
-        'Done': { status: 'Done', color: '#10b981' }
+        'Done': { status: 'Done', color: '#10b981' },
+        'Invalid Status': { status: 'Invalid Status', color: '#dc2626' }
     };
 
     const getTasksByStatus = (status) => {
@@ -308,7 +339,20 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
             console.log(`⚠️ KanbanBoard: No tasks.data for status ${status}`);
             return [];
         }
-        const filtered = tasks.data.filter(task => task.status === status && (!task.parent || task.parent === 0));
+        
+        let filtered;
+        if (status === 'Invalid Status') {
+            // Get tasks with invalid, missing, or incorrect status values
+            filtered = tasks.data.filter(task => 
+                (!task.parent || task.parent === 0) && 
+                (!task.status || !validStatuses.includes(task.status))
+            );
+        } else {
+            filtered = tasks.data.filter(task => 
+                task.status === status && 
+                (!task.parent || task.parent === 0)
+            );
+        }
         console.log(`📊 KanbanBoard: Status "${status}" has ${filtered.length} tasks:`, filtered.map(t => ({ id: t.id, text: t.text })));
         return filtered;
     };
@@ -321,6 +365,12 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
         const taskId = parseInt(active.id);
         const newStatus = over.id;
         const task = tasks.data.find(t => t.id === taskId);
+
+        // Prevent dropping tasks into "Invalid Status" column
+        if (newStatus === 'Invalid Status') {
+            console.log('⚠️ Cannot drop tasks into Invalid Status column');
+            return;
+        }
 
         if (task && task.status !== newStatus) {
             try {
@@ -377,20 +427,25 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
                 <Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 160px)', overflow: 'auto' }}>
                     {Object.entries(columns).map(([columnName, columnData]) => {
                         const columnTasks = getTasksByStatus(columnData.status);
+                        const isInvalidColumn = columnName === 'Invalid Status';
                         
                         return (
                             <Box key={columnName} sx={{ flex: 1, minWidth: '320px' }}>
                                 <Paper sx={{ 
-                                    bgcolor: '#f1f5f9', 
+                                    bgcolor: isInvalidColumn ? '#fef2f2' : '#f1f5f9', 
                                     p: 2, 
                                     mb: 2, 
                                     borderTop: `4px solid ${columnData.color}`,
-                                    boxShadow: 'none'
+                                    boxShadow: 'none',
+                                    border: isInvalidColumn ? '1px dashed #dc2626' : 'none'
                                 }}>
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#334155' }}>
-                                            {columnName}
-                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            {isInvalidColumn && <Warning sx={{ color: '#dc2626', fontSize: '1.2rem' }} />}
+                                            <Typography variant="h6" sx={{ fontWeight: 600, color: isInvalidColumn ? '#dc2626' : '#334155' }}>
+                                                {columnName}
+                                            </Typography>
+                                        </Box>
                                         <Chip 
                                             label={columnTasks.length} 
                                             size="small" 
@@ -401,6 +456,19 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
                                             }} 
                                         />
                                     </Box>
+                                    {isInvalidColumn && columnTasks.length > 0 && (
+                                        <Typography 
+                                            variant="caption" 
+                                            sx={{ 
+                                                display: 'block', 
+                                                mt: 1, 
+                                                color: '#7f1d1d',
+                                                fontStyle: 'italic'
+                                            }}
+                                        >
+                                            ⚠️ These tasks have invalid status values. Click on each task to edit and set a correct status.
+                                        </Typography>
+                                    )}
                                 </Paper>
 
                                 <SortableContext
