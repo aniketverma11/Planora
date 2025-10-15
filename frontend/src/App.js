@@ -8,6 +8,7 @@ import { ProjectProvider } from './contexts/ProjectContext';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
 import Dashboard from './components/Dashboard';
+import UserManagement from './components/UserManagement';
 import { CircularProgress, Box } from '@mui/material';
 
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || '';
@@ -52,6 +53,12 @@ const AppRoutes = () => {
         path="/dashboard"
         element={
           isAuthenticated ? <Dashboard /> : <Navigate to="/login" />
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          isAuthenticated ? <UserManagement /> : <Navigate to="/login" />
         }
       />
       <Route path="*" element={<Navigate to="/dashboard" />} />

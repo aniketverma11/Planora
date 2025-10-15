@@ -35,6 +35,7 @@ import {
   AttachFile,
   FolderOpen as ProjectIcon,
   Settings as SettingsIcon,
+  People as PeopleIcon,
 } from '@mui/icons-material';
 import GanttChart from './GanttChart';
 import KanbanBoard from './KanbanBoard';
@@ -192,6 +193,12 @@ const Dashboard = () => {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [taskFormOpen, setTaskFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+
+  // Debug: Log user object to see if designation is present
+  useEffect(() => {
+    console.log('Dashboard - Current user:', user);
+    console.log('Dashboard - User designation:', user?.designation);
+  }, [user]);
   const [projectSelectorOpen, setProjectSelectorOpen] = useState(false);
   const [projectFormOpen, setProjectFormOpen] = useState(false);
 
@@ -457,6 +464,12 @@ const Dashboard = () => {
                 {user?.email}
               </Typography>
             </MenuItem>
+            {user?.designation === 'admin' && (
+              <MenuItem onClick={() => { navigate('/users'); handleUserMenuClose(); }}>
+                <PeopleIcon sx={{ mr: 1 }} />
+                User Management
+              </MenuItem>
+            )}
             <MenuItem onClick={() => setProjectSelectorOpen(true)}>
               <ProjectIcon sx={{ mr: 1 }} />
               Switch Project
