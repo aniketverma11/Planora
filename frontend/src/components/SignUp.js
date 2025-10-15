@@ -25,7 +25,6 @@ import {
 } from '@mui/icons-material';
 import { signup } from '../services/api';
 import GoogleSignInButton from './GoogleSignInButton';
-import MicrosoftSignInButton from './MicrosoftSignInButton';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -393,9 +392,6 @@ const SignUp = () => {
 
               <Box sx={{ mb: 3 }}>
                 <GoogleSignInButton 
-                  onError={(errorMessage) => setError(errorMessage)}
-                />
-                <MicrosoftSignInButton 
                   onError={(errorMessage) => setError(errorMessage)}
                 />
               </Box>
