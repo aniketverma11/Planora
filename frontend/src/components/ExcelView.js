@@ -302,7 +302,7 @@ const ExcelView = ({ projectId, onTaskUpdate }) => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5' }}>ID</TableCell>
+                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5' }}>Task ID</TableCell>
                 <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5' }}>Title</TableCell>
                 <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5' }}>Status</TableCell>
                 <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5' }}>Priority</TableCell>
@@ -317,7 +317,21 @@ const ExcelView = ({ projectId, onTaskUpdate }) => {
             <TableBody>
               {tasks.map((task) => (
                 <TableRow key={task.id} hover>
-                  <TableCell>{task.id}</TableCell>
+                  <TableCell>
+                    {task.task_number ? (
+                      <Chip 
+                        label={task.task_number} 
+                        size="small" 
+                        sx={{ 
+                          bgcolor: '#e3f2fd', 
+                          color: '#1976d2',
+                          fontWeight: 'bold'
+                        }} 
+                      />
+                    ) : (
+                      `#${task.id}`
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Typography variant="body2" sx={{ maxWidth: 300 }}>
                       {task.title}

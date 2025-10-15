@@ -16,6 +16,7 @@ class Task(models.Model):
     )
 
     title = models.CharField(max_length=255)
+    task_number = models.CharField(max_length=50, unique=True, blank=True, null=True, help_text="Unique task ID like PROJ-0001")
     description = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='To Do', null=True, blank=True)
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='Medium')
@@ -41,6 +42,47 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        # Generate task_number if not exists
+        if not self.task_number and self.project:
+            # Get project key
+            project_key = self.project.key if self.project.key else 'TASK'
+            
+            # Get the highest task number for this project
+            last_task = Task.objects.filter(
+                project=self.project,
+                task_number__startswith=f"{project_key}-"
+            ).order_by('-task_number').first()
+            
+            if last_task and last_task.task_number:
+                # Extract number from last task (e.g., "PROJ-0005" -> 5)
+                try:
+                    last_number = int(last_task.task_number.split('-')[-1])
+                    next_number = last_number + 1
+                except (ValueError, IndexError):
+                    next_number = 1
+            else:
+                next_number = 1
+            
+            # Generate task number with zero-padding (min 4 digits)
+            self.task_number = f"{project_key}-{next_number:04d}"
+        elif not self.task_number and not self.project:
+            # For tasks without project, use TASK prefix
+            last_task = Task.objects.filter(
+                project__isnull=True,
+                task_number__startswith="TASK-"
+            ).order_by('-task_number').first()
+            
+            if last_task and last_task.task_number:
+                try:
+                    last_number = int(last_task.task_number.split('-')[-1])
+                    next_number = last_number + 1
+                except (ValueError, IndexError):
+                    next_number = 1
+            else:
+                next_number = 1
+            
+            self.task_number = f"TASK-{next_number:04d}"
+        
         # Check if we should skip progress auto-calculation
         skip_progress_auto = kwargs.pop('skip_progress_auto', False)
         
@@ -78,6 +120,8 @@ class Task(models.Model):
         ordering = ['id']
 
     def __str__(self):
+        if self.task_number:
+            return f"{self.task_number} - {self.title}"
         return self.title
 
 

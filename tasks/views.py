@@ -58,7 +58,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 
                 email_service.send_email(
                     to_email=task.assignee.email,
-                    subject=f'New Task Assigned: {task.title}',
+                    subject=f'New Task Assigned: [{task.task_number}] {task.title}' if task.task_number else f'New Task Assigned: {task.title}',
                     html_content=html_content
                 )
                 print(f"✅ Task assignment email sent to {task.assignee.email}")
@@ -92,7 +92,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 
                 email_service.send_email(
                     to_email=new_assignee.email,
-                    subject=f'Task Assigned: {task.title}',
+                    subject=f'Task Assigned: [{task.task_number}] {task.title}' if task.task_number else f'Task Assigned: {task.title}',
                     html_content=html_content
                 )
                 print(f"✅ Task assignment email sent to {new_assignee.email}")
@@ -134,7 +134,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 for recipient in recipients:
                     email_service.send_email(
                         to_email=recipient['email'],
-                        subject=f'Task Status Changed: {task.title}',
+                        subject=f'Task Status Changed: [{task.task_number}] {task.title}' if task.task_number else f'Task Status Changed: {task.title}',
                         html_content=html_content
                     )
                     print(f"✅ Status change email sent to {recipient['name']} ({recipient['email']})")

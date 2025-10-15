@@ -111,6 +111,7 @@ const GanttChartView = ({ projectId }) => {
                     
                     return {
                         id: task.id,
+                        task_number: task.task_number || '',  // JIRA-style task number
                         text: task.title || 'Untitled Task',
                         title: task.title || 'Untitled Task',  // Include both for compatibility
                         start_date: startDate,
@@ -251,6 +252,7 @@ const Dashboard = () => {
       console.log('📋 Dashboard: Raw task data:', response.data);
       const formattedTasks = response.data.map(task => ({
         id: task.id,
+        task_number: task.task_number || '',  // JIRA-style task number
         text: task.title || 'Untitled Task',
         start_date: task.start_date || new Date().toISOString().split('T')[0],
         due_date: task.due_date || '',
@@ -601,6 +603,17 @@ const Dashboard = () => {
           <>
             <DialogTitle sx={{ bgcolor: '#1976d2', color: 'white' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                {selectedTask.task_number && (
+                  <Chip 
+                    label={selectedTask.task_number} 
+                    size="small" 
+                    sx={{ 
+                      bgcolor: '#ffffff', 
+                      color: '#1976d2',
+                      fontWeight: 'bold'
+                    }} 
+                  />
+                )}
                 <Typography variant="h6">{selectedTask.text}</Typography>
                 {selectedTask.parent && (
                   <Chip 

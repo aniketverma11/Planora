@@ -198,6 +198,7 @@ def task_assignment_email_template(user, task, project, assigned_by):
             
             <div class="info-box">
                 <h3 style="margin-top: 0; color: #667eea;">Task Details</h3>
+                {f'<div class="detail-row"><span class="detail-label">Task ID:</span><span class="detail-value"><strong style="color: #667eea; font-size: 18px;">{task.task_number}</strong></span></div>' if task.task_number else ''}
                 <div class="detail-row">
                     <span class="detail-label">Task Name:</span>
                     <span class="detail-value"><strong>{task.title}</strong></span>
@@ -450,6 +451,8 @@ def task_status_change_email_template(task, old_status, new_status, changed_by_u
             
             <div class="info-box">
                 <h3 style="margin-top: 0; color: #495057;">Task Details</h3>
+                
+                {f'<div class="detail-row"><span class="detail-label">Task ID:</span><span class="detail-value"><strong style="color: #667eea; font-size: 18px;">{task.task_number}</strong></span></div>' if task.task_number else ''}
                 
                 <div class="detail-row">
                     <span class="detail-label">Task:</span>

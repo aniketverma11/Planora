@@ -141,18 +141,33 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
                         }
                     }}
                 >
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flex: 1 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 }}>
+                        {task.task_number && (
+                            <Chip 
+                                label={task.task_number} 
+                                size="small" 
+                                sx={{ 
+                                    bgcolor: '#e3f2fd', 
+                                    color: '#1976d2',
+                                    fontWeight: 'bold',
+                                    fontSize: '0.7rem',
+                                    height: '20px',
+                                    alignSelf: 'flex-start'
+                                }} 
+                            />
+                        )}
                         <Typography 
                             variant="subtitle1" 
                             sx={{ 
                                 fontWeight: 600, 
                                 color: '#1e293b',
-                                flex: 1,
                                 pr: 1
                             }}
                         >
                             {task.text}
                         </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                         {/* Critical Path Indicators */}
                         {task.is_critical && (
                             <Tooltip 

@@ -303,6 +303,17 @@ const CriticalPathView = ({ projectId }) => {
                           size="small"
                           color="error"
                         />
+                        {task.task_number && (
+                          <Chip 
+                            label={task.task_number} 
+                            size="small" 
+                            sx={{ 
+                              bgcolor: '#e3f2fd', 
+                              color: '#1976d2',
+                              fontWeight: 'bold'
+                            }} 
+                          />
+                        )}
                         <Typography variant="body1">
                           <strong>{task.title}</strong>
                         </Typography>
@@ -360,9 +371,23 @@ const CriticalPathView = ({ projectId }) => {
                   sx={{ bgcolor: 'error.light', '&:hover': { bgcolor: 'error.main', color: 'white' } }}
                 >
                   <TableCell>
-                    <Tooltip title={task.description || 'No description'}>
-                      <Typography variant="body2">{task.title}</Typography>
-                    </Tooltip>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {task.task_number && (
+                        <Chip 
+                          label={task.task_number} 
+                          size="small" 
+                          sx={{ 
+                            bgcolor: '#e3f2fd', 
+                            color: '#1976d2',
+                            fontWeight: 'bold',
+                            width: 'fit-content'
+                          }} 
+                        />
+                      )}
+                      <Tooltip title={task.description || 'No description'}>
+                        <Typography variant="body2">{task.title}</Typography>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
                   <TableCell>{task.duration} days</TableCell>
                   <TableCell>Day {task.early_start}</TableCell>
@@ -468,7 +493,23 @@ const CriticalPathView = ({ projectId }) => {
                   <TableBody>
                     {floatAnalysis.near_critical.map((task) => (
                       <TableRow key={task.id}>
-                        <TableCell>{task.title}</TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                            {task.task_number && (
+                              <Chip 
+                                label={task.task_number} 
+                                size="small" 
+                                sx={{ 
+                                  bgcolor: '#e3f2fd', 
+                                  color: '#1976d2',
+                                  fontWeight: 'bold',
+                                  width: 'fit-content'
+                                }} 
+                              />
+                            )}
+                            <Typography variant="body2">{task.title}</Typography>
+                          </Box>
+                        </TableCell>
                         <TableCell>
                           <Chip label={`${task.total_float} days`} size="small" color="warning" />
                         </TableCell>
