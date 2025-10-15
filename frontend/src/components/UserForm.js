@@ -41,6 +41,7 @@ const UserForm = ({ open, user, onClose, onSubmit }) => {
     if (user) {
       fetchUserDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchAvailablePermissions = async () => {

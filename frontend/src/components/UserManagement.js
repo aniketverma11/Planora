@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import {
   Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon,
-  Search as SearchIcon, FilterList as FilterIcon
+  Search as SearchIcon
 } from '@mui/icons-material';
 import api from '../services/api';
 import UserForm from './UserForm';
@@ -35,6 +35,7 @@ const UserManagement = () => {
   useEffect(() => {
     fetchCurrentUser();
     fetchUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCurrentUser = async () => {
@@ -99,6 +100,7 @@ const UserManagement = () => {
       }
     }, 500);
     return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, filterDesignation]);
 
   const handleAddUser = () => {

@@ -21,14 +21,12 @@ import {
   DialogActions,
 } from '@mui/material';
 import {
-  FileDownload as DownloadIcon,
+  Download as DownloadIcon,
   FileUpload as UploadIcon,
   Description as TemplateIcon,
   Refresh as RefreshIcon,
-  Edit as EditIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { getAllTasks, exportTasksToExcel, downloadSampleExcel, importTasksFromExcel, deleteTask } from '../services/api';
 

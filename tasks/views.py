@@ -134,7 +134,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         headers = [
             'ID', 'Title', 'Description', 'Status', 'Priority',
             'Start Date', 'Due Date', 'Duration (days)', 'Progress (%)',
-            'Parent Task ID', 'Assignee Username', 'Dependencies (IDs)'
+            'Parent Task ID', 'Assignee Email', 'Dependencies (IDs)'
         ]
         
         # Style headers
@@ -161,7 +161,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             ws.cell(row=row_num, column=8, value=task.duration or '')
             ws.cell(row=row_num, column=9, value=task.progress or 0)
             ws.cell(row=row_num, column=10, value=task.parent_task_id or '')
-            ws.cell(row=row_num, column=11, value=task.assignee.username if task.assignee else '')
+            ws.cell(row=row_num, column=11, value=task.assignee.email if task.assignee else '')
             
             # Dependencies as comma-separated IDs
             dep_ids = ','.join(str(dep.id) for dep in task.dependencies.all()) if task.dependencies.exists() else ''
@@ -205,7 +205,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         headers = [
             'Title', 'Description', 'Status', 'Priority',
             'Start Date', 'Due Date', 'Duration (days)', 'Progress (%)',
-            'Parent Task ID', 'Assignee Username', 'Dependencies (IDs)'
+            'Parent Task ID', 'Assignee Email', 'Dependencies (IDs)'
         ]
         
         # Style headers
@@ -220,10 +220,10 @@ class TaskViewSet(viewsets.ModelViewSet):
             cell.font = header_font
             cell.alignment = header_alignment
         
-        # Add sample data
+        # Add sample data with emails instead of usernames
         sample_data = [
-            ['Sample Task 1', 'This is a sample task', 'pending', 'high', '2025-01-01', '2025-01-10', 10, 0, '', 'admin', ''],
-            ['Sample Task 2', 'Another sample task', 'in_progress', 'medium', '2025-01-05', '2025-01-15', 10, 50, '', 'admin', ''],
+            ['Sample Task 1', 'This is a sample task', 'To Do', 'High', '2025-01-01', '2025-01-10', 10, 0, '', 'admin@example.com', ''],
+            ['Sample Task 2', 'Another sample task', 'In Progress', 'Medium', '2025-01-05', '2025-01-15', 10, 50, '', 'user@example.com', ''],
         ]
         
         for row_num, data in enumerate(sample_data, 2):
@@ -237,13 +237,13 @@ class TaskViewSet(viewsets.ModelViewSet):
             "",
             "1. Fill in the task details in the 'Tasks' sheet",
             "2. Required fields: Title, Status, Priority",
-            "3. Status options: pending, in_progress, completed, on_hold",
-            "4. Priority options: low, medium, high, critical",
+            "3. Status options: To Do, In Progress, Done",
+            "4. Priority options: Low, Medium, High",
             "5. Date format: YYYY-MM-DD (e.g., 2025-01-01)",
             "6. Duration: Number of days",
             "7. Progress: Number between 0-100",
             "8. Parent Task ID: Leave empty for main tasks, enter task ID for subtasks",
-            "9. Assignee Username: Must match existing username",
+            "9. Assignee Email: Must match existing user email (e.g., admin@example.com)",
             "10. Dependencies: Comma-separated task IDs (e.g., 1,2,3)",
             "",
             "Note: Do not modify the header row in the Tasks sheet"
@@ -308,7 +308,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             expected_headers = [
                 'Title', 'Description', 'Status', 'Priority',
                 'Start Date', 'Due Date', 'Duration (days)', 'Progress (%)',
-                'Parent Task ID', 'Assignee Username', 'Dependencies (IDs)'
+                'Parent Task ID', 'Assignee Email', 'Dependencies (IDs)'
             ]
             
             actual_headers = [cell.value for cell in ws[1]]
@@ -365,18 +365,23 @@ class TaskViewSet(viewsets.ModelViewSet):
                     duration = int(values[6]) if values[6] else None
                     progress = int(values[7]) if values[7] else 0
                     parent_task_id = int(values[8]) if values[8] else None
-                    assignee_username = str(values[9]).strip() if values[9] else None
+                    assignee_email = str(values[9]).strip() if values[9] else None
                     dependency_ids = str(values[10]).strip() if values[10] else ''
                     
-                    # Get assignee
+                    # Get assignee by email (more robust than username)
                     assignee = None
-                    if assignee_username:
+                    if assignee_email:
                         from users.models import CustomUser
                         try:
-                            assignee = CustomUser.objects.get(username=assignee_username)
+                            assignee = CustomUser.objects.get(email=assignee_email)
                         except CustomUser.DoesNotExist:
-                            errors.append(f"Row {row_num}: User '{assignee_username}' not found")
-                            continue
+                            errors.append(f"Row {row_num}: User with email '{assignee_email}' not found")
+                            # Don't skip - create task without assignee
+                            assignee = None
+                        except CustomUser.MultipleObjectsReturned:
+                            # If multiple users have same email (shouldn't happen), take the first
+                            assignee = CustomUser.objects.filter(email=assignee_email).first()
+                            errors.append(f"Row {row_num}: Warning - Multiple users found with email '{assignee_email}', using first match")
                     
                     # Create task
                     task = Task.objects.create(

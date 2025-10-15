@@ -174,7 +174,6 @@ const CriticalPathView = ({ projectId }) => {
     critical_paths = [], 
     project_duration = 0,
     earliest_completion,
-    latest_completion,
     total_tasks = 0,
     critical_tasks_count = 0,
     risk_level = 'unknown'
