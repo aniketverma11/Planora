@@ -97,6 +97,7 @@ export const getAllTasks = (projectId = null) => {
 export const getSubTasks = (taskId) => api.get(`tasks/${taskId}/subtasks/`);
 export const createTask = (taskData) => api.post('tasks/', taskData);
 export const updateTask = (taskId, taskData) => api.put(`tasks/${taskId}/`, taskData);
+export const patchTask = (taskId, taskData) => api.patch(`tasks/${taskId}/`, taskData);
 export const deleteTask = (taskId) => api.delete(`tasks/${taskId}/`);
 
 // Document APIs
@@ -148,6 +149,29 @@ export const calculateCriticalPath = (projectId) => {
 
 export const getFloatAnalysis = (projectId) => {
   return api.get(`tasks/float_analysis/?project_id=${projectId}`);
+};
+
+// User Management Bulk Upload APIs
+export const importUsersFromExcel = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.post('users/manage/import-excel/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const exportUsersToExcel = () => {
+  return api.get('users/manage/export-excel/', {
+    responseType: 'blob',
+  });
+};
+
+export const downloadUserSampleExcel = () => {
+  return api.get('users/manage/download-sample/', {
+    responseType: 'blob',
+  });
 };
 
 export default api;

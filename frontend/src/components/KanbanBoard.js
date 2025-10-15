@@ -28,6 +28,8 @@ import {
     PointerSensor,
     useSensor,
     useSensors,
+    DragOverlay,
+    useDroppable,
 } from '@dnd-kit/core';
 import {
     SortableContext,
@@ -35,7 +37,7 @@ import {
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import axios from 'axios';
+import { patchTask } from '../services/api';
 
 const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompletedSubtasks }) => {
     const {
@@ -47,10 +49,21 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
         isDragging,
     } = useSortable({ id: task.id.toString() });
 
+    // Helper function to strip HTML and decode entities
+    const getPlainTextFromHTML = (html) => {
+        if (!html) return '';
+        // Create a temporary div to decode HTML entities
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const text = temp.textContent || temp.innerText || '';
+        return text;
+    };
+
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.5 : 1,
+        transition: transition || 'transform 200ms cubic-bezier(0.25, 0.1, 0.25, 1)',
+        opacity: isDragging ? 0.6 : 1,
+        zIndex: isDragging ? 1000 : 1,
     };
 
     const subtaskCount = getSubtaskCount(task.id);
@@ -67,14 +80,20 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
                 mb: 2,
                 bgcolor: 'white',
                 boxShadow: isDragging 
-                    ? '0 8px 16px rgba(0,0,0,0.2)' 
+                    ? '0 12px 24px rgba(0,0,0,0.25)' 
                     : '0 1px 3px rgba(0,0,0,0.1)',
-                cursor: 'pointer',
+                cursor: isDragging ? 'grabbing' : 'grab',
+                userSelect: isDragging ? 'none' : 'auto', // Prevent text selection when dragging
+                WebkitUserSelect: isDragging ? 'none' : 'auto',
                 '&:hover': {
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                    boxShadow: isDragging 
+                        ? '0 12px 24px rgba(0,0,0,0.25)' 
+                        : '0 4px 12px rgba(0,0,0,0.15)',
+                    transform: isDragging ? 'none' : 'translateY(-2px)'
                 },
-                transition: 'box-shadow 0.2s',
-                border: hasInvalidStatus ? '2px solid #dc2626' : '1px solid #e2e8f0'
+                transition: 'all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                border: hasInvalidStatus ? '2px solid #dc2626' : '1px solid #e2e8f0',
+                transform: isDragging ? 'rotate(3deg) scale(1.02)' : 'none',
             }}
             onClick={() => onTaskClick(task)}
         >
@@ -107,7 +126,20 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
                 
                 <Box 
                     {...listeners}
-                    sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}
+                    sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'space-between', 
+                        alignItems: 'flex-start', 
+                        mb: 1.5,
+                        userSelect: 'none', // Prevent text selection
+                        WebkitUserSelect: 'none',
+                        MozUserSelect: 'none',
+                        msUserSelect: 'none',
+                        cursor: 'grab',
+                        '&:active': {
+                            cursor: 'grabbing'
+                        }
+                    }}
                 >
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flex: 1 }}>
                         <Typography 
@@ -202,10 +234,18 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
                         sx={{ 
                             color: '#64748b', 
                             mb: 1.5,
-                            fontSize: '0.875rem'
+                            fontSize: '0.875rem',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
                         }}
                     >
-                        {task.description}
+                        {(() => {
+                            const plainText = getPlainTextFromHTML(task.description);
+                            return plainText.substring(0, 100) + (plainText.length > 100 ? '...' : '');
+                        })()}
                     </Typography>
                 )}
 
@@ -303,9 +343,33 @@ const TaskCard = ({ task, onMenuOpen, onTaskClick, getSubtaskCount, getCompleted
     );
 };
 
+const DroppableColumn = ({ children, id }) => {
+    const { setNodeRef, isOver } = useDroppable({
+        id: id,
+    });
+
+    return (
+        <Box
+            ref={setNodeRef}
+            sx={{
+                minHeight: '500px',
+                borderRadius: 2,
+                p: 1,
+                transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                bgcolor: isOver ? 'rgba(0, 0, 0, 0.06)' : 'rgba(0, 0, 0, 0.02)',
+                border: isOver ? '2px dashed rgba(0, 0, 0, 0.3)' : '2px dashed transparent',
+                touchAction: 'none', // Prevent browser touch gestures
+            }}
+        >
+            {children}
+        </Box>
+    );
+};
+
 const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }) => {
     const [menuAnchor, setMenuAnchor] = useState(null);
     const [selectedTask, setSelectedTask] = useState(null);
+    const [activeId, setActiveId] = useState(null);
 
     // Debug logging
     useEffect(() => {
@@ -320,7 +384,7 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 8,
+                distance: 8, // Optimal distance to prevent text selection
             },
         })
     );
@@ -357,34 +421,90 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
         return filtered;
     };
 
+    const handleDragStart = (event) => {
+        setActiveId(event.active.id);
+    };
+
     const handleDragEnd = async (event) => {
         const { active, over } = event;
+        
+        setActiveId(null);
 
         if (!over) return;
 
         const taskId = parseInt(active.id);
-        const newStatus = over.id;
         const task = tasks.data.find(t => t.id === taskId);
+        
+        console.log('🎯 Drag Details:', {
+            taskId,
+            taskCurrentStatus: task?.status,
+            overId: over.id,
+            overType: typeof over.id
+        });
+        
+        // Determine the new status
+        // If over.id is a valid status, use it; otherwise find the status of the task being dropped on
+        const validStatuses = ['To Do', 'In Progress', 'Done'];
+        let newStatus;
+        
+        if (validStatuses.includes(over.id)) {
+            // Dropped in empty column space
+            newStatus = over.id;
+            console.log('✅ Dropped in column:', newStatus);
+        } else {
+            // Dropped on another task - find that task's status
+            const targetTask = tasks.data.find(t => t.id.toString() === over.id);
+            if (targetTask) {
+                newStatus = targetTask.status;
+                console.log('✅ Dropped on task:', { targetTaskId: targetTask.id, targetTaskStatus: newStatus });
+            } else {
+                console.log('⚠️ Could not determine target status');
+                return;
+            }
+        }
 
         // Prevent dropping tasks into "Invalid Status" column
-        if (newStatus === 'Invalid Status') {
+        if (newStatus === 'Invalid Status' || !validStatuses.includes(newStatus)) {
             console.log('⚠️ Cannot drop tasks into Invalid Status column');
             return;
         }
 
+        console.log('📋 Status Change:', {
+            from: task.status,
+            to: newStatus,
+            direction: getStatusDirection(task.status, newStatus)
+        });
+
         if (task && task.status !== newStatus) {
             try {
-                const token = localStorage.getItem('access_token');
-                await axios.patch(
-                    `${process.env.REACT_APP_API_URL}/tasks/${taskId}/`,
-                    { status: newStatus },
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+                console.log('🔄 Updating task status:', { taskId, oldStatus: task.status, newStatus });
+                const token = localStorage.getItem('token');
+                console.log('🔑 Token exists:', !!token);
+                
+                await patchTask(taskId, { status: newStatus });
+                console.log('✅ Task status updated successfully');
                 onRefresh();
             } catch (error) {
-                console.error('Error updating task status:', error);
+                console.error('❌ Error updating task status:', error);
+                console.error('Response:', error.response?.data);
+                console.error('Status:', error.response?.status);
             }
         }
+    };
+    
+    const getStatusDirection = (fromStatus, toStatus) => {
+        const statusOrder = { 'To Do': 0, 'In Progress': 1, 'Done': 2 };
+        const fromIndex = statusOrder[fromStatus] || -1;
+        const toIndex = statusOrder[toStatus] || -1;
+        
+        if (fromIndex === -1 || toIndex === -1) return 'unknown';
+        if (fromIndex < toIndex) return 'forward ➡️';
+        if (fromIndex > toIndex) return 'backward ⬅️';
+        return 'same';
+    };
+
+    const handleDragCancel = () => {
+        setActiveId(null);
     };
 
     const handleMenuOpen = (event, task) => {
@@ -418,11 +538,21 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
     };
 
     return (
-        <Box sx={{ height: '100%', bgcolor: '#f8fafc', p: 3 }}>
+        <Box sx={{ 
+            height: '100%', 
+            bgcolor: '#f8fafc', 
+            p: 3,
+            userSelect: activeId ? 'none' : 'auto', // Disable text selection globally during drag
+            WebkitUserSelect: activeId ? 'none' : 'auto',
+            MozUserSelect: activeId ? 'none' : 'auto',
+            msUserSelect: activeId ? 'none' : 'auto',
+        }}>
             <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
+                onDragCancel={handleDragCancel}
             >
                 <Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 160px)', overflow: 'auto' }}>
                     {Object.entries(columns).map(([columnName, columnData]) => {
@@ -466,7 +596,7 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
                                                 fontStyle: 'italic'
                                             }}
                                         >
-                                            ⚠️ These tasks have invalid status values. Click on each task to edit and set a correct status.
+                                            ⚠️ These tasks have invalid status values. <strong>Drag them to a valid column (To Do, In Progress, or Done)</strong> or click to edit.
                                         </Typography>
                                     )}
                                 </Paper>
@@ -476,14 +606,7 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
                                     items={columnTasks.map(t => t.id.toString())}
                                     strategy={verticalListSortingStrategy}
                                 >
-                                    <Box
-                                        id={columnData.status}
-                                        sx={{
-                                            minHeight: '500px',
-                                            borderRadius: 2,
-                                            p: 1,
-                                        }}
-                                    >
+                                    <DroppableColumn id={columnData.status}>
                                         {columnTasks.map((task) => (
                                             <TaskCard
                                                 key={task.id}
@@ -494,12 +617,35 @@ const KanbanBoard = ({ tasks, onRefresh, onTaskClick, onEditTask, onDeleteTask }
                                                 getCompletedSubtasks={getCompletedSubtasks}
                                             />
                                         ))}
-                                    </Box>
+                                    </DroppableColumn>
                                 </SortableContext>
                             </Box>
                         );
                     })}
                 </Box>
+                
+                <DragOverlay 
+                    dropAnimation={{
+                        duration: 200,
+                        easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+                    }}
+                >
+                    {activeId ? (
+                        <Card sx={{ 
+                            opacity: 0.9,
+                            transform: 'rotate(3deg) scale(1.05)',
+                            boxShadow: '0 12px 24px rgba(0,0,0,0.3)',
+                            cursor: 'grabbing',
+                            bgcolor: 'white'
+                        }}>
+                            <CardContent>
+                                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {tasks.data.find(t => t.id.toString() === activeId)?.text}
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    ) : null}
+                </DragOverlay>
             </DndContext>
 
             <Menu

@@ -731,14 +731,26 @@ const Dashboard = () => {
                   
                   {selectedTask.description && (
                     <>
-                      <Typography variant="subtitle2" gutterBottom>
+                      <Typography 
+                        variant="subtitle2" 
+                        gutterBottom
+                        sx={{ 
+                          fontWeight: 600, 
+                          color: '#172b4d',
+                          mb: 1.5
+                        }}
+                      >
                         Description
                       </Typography>
                       <Box sx={{ 
-                        bgcolor: '#f8f9fa', 
-                        p: 2, 
-                        borderRadius: 1,
-                        border: '1px solid #e9ecef' 
+                        bgcolor: '#ffffff', 
+                        p: 3, 
+                        borderRadius: 2,
+                        border: '1px solid #dfe1e6',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                        '&:hover': {
+                          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+                        }
                       }}>
                         <HtmlContent content={selectedTask.description} />
                       </Box>

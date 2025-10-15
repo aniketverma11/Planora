@@ -580,10 +580,10 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = nu
                 {/* Editor Content */}
                 <Box sx={{
                   '& .ProseMirror': {
-                    minHeight: '150px',
-                    maxHeight: '300px',
+                    minHeight: '250px',
+                    maxHeight: '450px',
                     overflowY: 'auto',
-                    padding: '10px 14px',
+                    padding: '12px 14px',
                     outline: 'none',
                     fontSize: '14px',
                     lineHeight: 1.6,
@@ -614,6 +614,21 @@ const TaskForm = ({ open, handleClose, task, parentTaskId = null, projectId = nu
                     '&.ProseMirror-focused': {
                       outline: 'none',
                     },
+                    /* Custom scrollbar */
+                    '&::-webkit-scrollbar': {
+                      width: '8px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      bgcolor: '#f4f5f7',
+                      borderRadius: '4px',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      bgcolor: '#c1c7d0',
+                      borderRadius: '4px',
+                      '&:hover': {
+                        bgcolor: '#a5adba',
+                      }
+                    }
                   },
                   '& .ProseMirror p.is-editor-empty:first-child::before': {
                     color: '#8993a4',

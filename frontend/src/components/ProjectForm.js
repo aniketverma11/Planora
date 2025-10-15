@@ -27,6 +27,7 @@ import {
   ListItemSecondaryAction,
   Card,
   CardContent,
+  ToggleButton,
 } from '@mui/material';
 import {
   Close as CloseIcon, 
@@ -36,7 +37,20 @@ import {
   Person,
   CheckCircle,
   Info,
+  FormatBold,
+  FormatItalic,
+  FormatUnderlined,
+  FormatListBulleted,
+  FormatListNumbered,
+  Code,
 } from '@mui/icons-material';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import { Link } from '@tiptap/extension-link';
+import Underline from '@tiptap/extension-underline';
 import { createProject, updateProject, getUsers, getProject } from '../services/api';
 
 const ProjectForm = ({ open, onClose, project = null, onSuccess }) => {
@@ -55,6 +69,33 @@ const ProjectForm = ({ open, onClose, project = null, onSuccess }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showMembersList, setShowMembersList] = useState(false);
   const isEdit = !!project;
+
+  // Initialize TipTap editor for description
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      TextStyle,
+      Color,
+      Link.configure({
+        openOnClick: false,
+      }),
+      Placeholder.configure({
+        placeholder: 'Add a detailed description for your project...',
+      }),
+    ],
+    content: formData.description,
+    onUpdate: ({ editor }) => {
+      setFormData({ ...formData, description: editor.getHTML() });
+    },
+  });
+
+  // Update editor content when formData.description changes
+  useEffect(() => {
+    if (editor && formData.description !== editor.getHTML()) {
+      editor.commands.setContent(formData.description);
+    }
+  }, [formData.description, editor]);
 
   const fetchProjectDetails = async () => {
     try {
@@ -278,7 +319,7 @@ const ProjectForm = ({ open, onClose, project = null, onSuccess }) => {
               Basic Details
             </Typography>
             <Grid container spacing={2.5}>
-              <Grid item xs={12} sm={8}>
+              <Grid item xs={12} md={8}>
                 <TextField
                   fullWidth
                   label="Project Name"
@@ -292,7 +333,7 @@ const ProjectForm = ({ open, onClose, project = null, onSuccess }) => {
                 />
               </Grid>
 
-              <Grid item xs={12} sm={4}>
+              <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
                   label="Project Key"
@@ -307,22 +348,230 @@ const ProjectForm = ({ open, onClose, project = null, onSuccess }) => {
                   helperText="Max 10 characters"
                 />
               </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  multiline
-                  rows={3}
-                  variant="outlined"
-                  size="small"
-                  placeholder="Describe your project..."
-                />
-              </Grid>
             </Grid>
+          </Box>
+
+          {/* Description Section */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600, color: 'text.primary' }}>
+              Description
+            </Typography>
+            <Box sx={{ 
+              border: '1px solid #dfe1e6',
+              borderRadius: '3px',
+              bgcolor: '#fafbfc',
+              overflow: 'hidden',
+              '&:hover': {
+                bgcolor: '#ffffff',
+                borderColor: '#b3bac5',
+              },
+              '&:focus-within': {
+                bgcolor: '#ffffff',
+                borderColor: '#4c9aff',
+                boxShadow: '0 0 0 1px #4c9aff',
+              }
+            }}>
+              {/* Editor Toolbar */}
+              {editor && (
+                <Box sx={{ 
+                  borderBottom: '1px solid #dfe1e6',
+                  bgcolor: '#f4f5f7',
+                  p: 0.5,
+                  px: 1,
+                  display: 'flex',
+                  gap: 0.25,
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                }}>
+                  <ToggleButton
+                    value="bold"
+                    selected={editor.isActive('bold')}
+                    onChange={() => editor.chain().focus().toggleBold().run()}
+                    size="small"
+                    sx={{ 
+                      border: 'none', 
+                      borderRadius: '3px',
+                      minWidth: '32px',
+                      height: '32px',
+                      p: 0.5,
+                      color: editor.isActive('bold') ? '#0052cc' : '#42526e',
+                      bgcolor: editor.isActive('bold') ? '#deebff' : 'transparent',
+                      '&:hover': {
+                        bgcolor: editor.isActive('bold') ? '#b3d4ff' : '#f4f5f7',
+                      }
+                    }}
+                  >
+                    <FormatBold sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                  <ToggleButton
+                    value="italic"
+                    selected={editor.isActive('italic')}
+                    onChange={() => editor.chain().focus().toggleItalic().run()}
+                    size="small"
+                    sx={{ 
+                      border: 'none', 
+                      borderRadius: '3px',
+                      minWidth: '32px',
+                      height: '32px',
+                      p: 0.5,
+                      color: editor.isActive('italic') ? '#0052cc' : '#42526e',
+                      bgcolor: editor.isActive('italic') ? '#deebff' : 'transparent',
+                      '&:hover': {
+                        bgcolor: editor.isActive('italic') ? '#b3d4ff' : '#f4f5f7',
+                      }
+                    }}
+                  >
+                    <FormatItalic sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                  <ToggleButton
+                    value="underline"
+                    selected={editor.isActive('underline')}
+                    onChange={() => editor.chain().focus().toggleUnderline().run()}
+                    size="small"
+                    sx={{ 
+                      border: 'none', 
+                      borderRadius: '3px',
+                      minWidth: '32px',
+                      height: '32px',
+                      p: 0.5,
+                      color: editor.isActive('underline') ? '#0052cc' : '#42526e',
+                      bgcolor: editor.isActive('underline') ? '#deebff' : 'transparent',
+                      '&:hover': {
+                        bgcolor: editor.isActive('underline') ? '#b3d4ff' : '#f4f5f7',
+                      }
+                    }}
+                  >
+                    <FormatUnderlined sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                  <Box sx={{ width: '1px', height: '24px', bgcolor: '#dfe1e6', mx: 0.5 }} />
+                  <ToggleButton
+                    value="bulletList"
+                    selected={editor.isActive('bulletList')}
+                    onChange={() => editor.chain().focus().toggleBulletList().run()}
+                    size="small"
+                    sx={{ 
+                      border: 'none', 
+                      borderRadius: '3px',
+                      minWidth: '32px',
+                      height: '32px',
+                      p: 0.5,
+                      color: editor.isActive('bulletList') ? '#0052cc' : '#42526e',
+                      bgcolor: editor.isActive('bulletList') ? '#deebff' : 'transparent',
+                      '&:hover': {
+                        bgcolor: editor.isActive('bulletList') ? '#b3d4ff' : '#f4f5f7',
+                      }
+                    }}
+                  >
+                    <FormatListBulleted sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                  <ToggleButton
+                    value="orderedList"
+                    selected={editor.isActive('orderedList')}
+                    onChange={() => editor.chain().focus().toggleOrderedList().run()}
+                    size="small"
+                    sx={{ 
+                      border: 'none', 
+                      borderRadius: '3px',
+                      minWidth: '32px',
+                      height: '32px',
+                      p: 0.5,
+                      color: editor.isActive('orderedList') ? '#0052cc' : '#42526e',
+                      bgcolor: editor.isActive('orderedList') ? '#deebff' : 'transparent',
+                      '&:hover': {
+                        bgcolor: editor.isActive('orderedList') ? '#b3d4ff' : '#f4f5f7',
+                      }
+                    }}
+                  >
+                    <FormatListNumbered sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                  <Box sx={{ width: '1px', height: '24px', bgcolor: '#dfe1e6', mx: 0.5 }} />
+                  <ToggleButton
+                    value="code"
+                    selected={editor.isActive('code')}
+                    onChange={() => editor.chain().focus().toggleCode().run()}
+                    size="small"
+                    sx={{ 
+                      border: 'none', 
+                      borderRadius: '3px',
+                      minWidth: '32px',
+                      height: '32px',
+                      p: 0.5,
+                      color: editor.isActive('code') ? '#0052cc' : '#42526e',
+                      bgcolor: editor.isActive('code') ? '#deebff' : 'transparent',
+                      '&:hover': {
+                        bgcolor: editor.isActive('code') ? '#b3d4ff' : '#f4f5f7',
+                      }
+                    }}
+                  >
+                    <Code sx={{ fontSize: 18 }} />
+                  </ToggleButton>
+                </Box>
+              )}
+              
+              {/* Editor Content */}
+              <Box sx={{
+                '& .ProseMirror': {
+                  minHeight: '200px',
+                  maxHeight: '350px',
+                  overflowY: 'auto',
+                  padding: '12px 14px',
+                  outline: 'none',
+                  fontSize: '14px',
+                  lineHeight: 1.6,
+                  color: '#172b4d',
+                  '& p': { margin: '0.5em 0' },
+                  '& h1': { fontSize: '2em', margin: '0.5em 0', fontWeight: 600 },
+                  '& h2': { fontSize: '1.5em', margin: '0.5em 0', fontWeight: 600 },
+                  '& h3': { fontSize: '1.17em', margin: '0.5em 0', fontWeight: 600 },
+                  '& ul, & ol': { paddingLeft: '1.5em', margin: '0.5em 0' },
+                  '& a': { color: '#0052cc', textDecoration: 'underline' },
+                  '& code': { 
+                    bgcolor: '#f4f5f7', 
+                    padding: '2px 6px', 
+                    borderRadius: '3px',
+                    fontSize: '0.9em',
+                    fontFamily: 'monospace'
+                  },
+                  '& pre': {
+                    bgcolor: '#f4f5f7',
+                    padding: '12px',
+                    borderRadius: '3px',
+                    overflow: 'auto',
+                    '& code': {
+                      bgcolor: 'transparent',
+                      padding: 0
+                    }
+                  },
+                  '&.ProseMirror-focused': {
+                    outline: 'none',
+                  },
+                  /* Custom scrollbar */
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    bgcolor: '#f4f5f7',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    bgcolor: '#c1c7d0',
+                    borderRadius: '4px',
+                    '&:hover': {
+                      bgcolor: '#a5adba',
+                    }
+                  }
+                },
+                '& .ProseMirror p.is-editor-empty:first-child::before': {
+                  color: '#8993a4',
+                  content: 'attr(data-placeholder)',
+                  float: 'left',
+                  height: 0,
+                  pointerEvents: 'none',
+                }
+              }}>
+                <EditorContent editor={editor} />
+              </Box>
+            </Box>
           </Box>
 
           {/* Project Timeline Section */}

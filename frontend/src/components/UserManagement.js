@@ -3,14 +3,17 @@ import {
   Container, Typography, Button, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, IconButton, TextField, InputAdornment,
   Chip, Dialog, DialogTitle, DialogContent, DialogActions, Select,
-  MenuItem, FormControl, InputLabel, Alert, CircularProgress
+  MenuItem, FormControl, InputLabel, Alert, CircularProgress, Box
 } from '@mui/material';
 import {
   Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon,
-  Search as SearchIcon
+  Search as SearchIcon, Download as DownloadIcon,
+  FileUpload as UploadIcon, Description as TemplateIcon
 } from '@mui/icons-material';
+import { importUsersFromExcel, exportUsersToExcel, downloadUserSampleExcel } from '../services/api';
 import api from '../services/api';
 import UserForm from './UserForm';
+import { saveAs } from 'file-saver';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -23,6 +26,11 @@ const UserManagement = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const [success, setSuccess] = useState('');
 
   const designations = [
     { value: 'admin', label: 'Admin' },
@@ -151,6 +159,87 @@ const UserManagement = () => {
     return colors[designation] || 'default';
   };
 
+  const handleExport = async () => {
+    try {
+      setError('');
+      setSuccess('');
+      const response = await exportUsersToExcel();
+      
+      // Create blob and download
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      
+      const filename = `users_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      saveAs(blob, filename);
+      setSuccess('Users exported successfully!');
+      
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Export failed:', err);
+      setError('Failed to export users');
+    }
+  };
+
+  const handleDownloadSample = async () => {
+    try {
+      setError('');
+      const response = await downloadUserSampleExcel();
+      
+      // Create blob and download
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      
+      const filename = `sample_user_import_${new Date().toISOString().split('T')[0]}.xlsx`;
+      saveAs(blob, filename);
+    } catch (err) {
+      console.error('Download sample failed:', err);
+      setError('Failed to download sample file');
+    }
+  };
+
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedFile) {
+      setError('Please select a file to import');
+      return;
+    }
+
+    try {
+      setImporting(true);
+      setError('');
+      setImportResult(null);
+      
+      const response = await importUsersFromExcel(selectedFile);
+      setImportResult(response.data);
+      setSuccess(`Successfully imported ${response.data.created_count} users!`);
+      
+      // Refresh user list
+      await fetchUsers();
+      
+      // Close dialog after short delay only on success
+      setTimeout(() => {
+        setImportDialogOpen(false);
+        setSelectedFile(null);
+        setImportResult(null);
+      }, 3000);
+      
+    } catch (err) {
+      console.error('Import failed:', err);
+      setError(err.response?.data?.error || 'Failed to import users');
+      // Don't auto-close on error - let user read and manually close
+    } finally {
+      setImporting(false);
+    }
+  };
+
   if (currentUser && currentUser.designation !== 'admin') {
     return (
       <Container maxWidth="lg" sx={{ mt: 4 }}>
@@ -173,9 +262,15 @@ const UserManagement = () => {
         </Alert>
       )}
 
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
+          {success}
+        </Alert>
+      )}
+
       {/* Filters and Actions */}
       <Paper sx={{ p: 2, mb: 2 }}>
-        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <TextField
             placeholder="Search users..."
             value={searchTerm}
@@ -198,9 +293,9 @@ const UserManagement = () => {
               label="Designation"
             >
               <MenuItem value="">All</MenuItem>
-              {designations.map((des) => (
-                <MenuItem key={des.value} value={des.value}>
-                  {des.label}
+              {designations.map((d) => (
+                <MenuItem key={d.value} value={d.value}>
+                  {d.label}
                 </MenuItem>
               ))}
             </Select>
@@ -208,13 +303,42 @@ const UserManagement = () => {
 
           <Button
             variant="contained"
-            color="primary"
             startIcon={<AddIcon />}
             onClick={handleAddUser}
           >
             Add User
           </Button>
-        </div>
+        </Box>
+
+        {/* Excel Import/Export Actions */}
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<UploadIcon />}
+            onClick={() => setImportDialogOpen(true)}
+            color="primary"
+          >
+            Import Users
+          </Button>
+
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={handleExport}
+            color="success"
+          >
+            Export Users
+          </Button>
+
+          <Button
+            variant="outlined"
+            startIcon={<TemplateIcon />}
+            onClick={handleDownloadSample}
+            color="info"
+          >
+            Download Sample
+          </Button>
+        </Box>
       </Paper>
 
       {/* Users Table */}
@@ -309,6 +433,101 @@ const UserManagement = () => {
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleDeleteConfirm} color="error" variant="contained">
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Import Users Dialog */}
+      <Dialog 
+        open={importDialogOpen} 
+        onClose={() => !importing && setImportDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Import Users from Excel</DialogTitle>
+        <DialogContent>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+
+          {success && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {success}
+            </Alert>
+          )}
+
+          {importResult && importResult.errors && importResult.errors.length > 0 && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Import completed with warnings:
+              </Typography>
+              <Box component="ul" sx={{ pl: 2, mt: 1 }}>
+                {importResult.errors.map((err, idx) => (
+                  <li key={idx}><Typography variant="caption">{err}</Typography></li>
+                ))}
+              </Box>
+            </Alert>
+          )}
+
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              Upload an Excel file with user data. The file should contain columns:
+            </Typography>
+            <Box component="ul" sx={{ pl: 3, mt: 1 }}>
+              <li><Typography variant="body2"><strong>Username</strong> (required)</Typography></li>
+              <li><Typography variant="body2"><strong>First Name</strong> (required)</Typography></li>
+              <li><Typography variant="body2"><strong>Last Name</strong> (required)</Typography></li>
+              <li><Typography variant="body2"><strong>Email</strong> (required)</Typography></li>
+              <li><Typography variant="body2"><strong>Password</strong> (optional - random password generated if empty)</Typography></li>
+            </Box>
+          </Box>
+
+          <Button
+            variant="outlined"
+            component="label"
+            fullWidth
+            startIcon={<UploadIcon />}
+            sx={{ mb: 2 }}
+          >
+            {selectedFile ? selectedFile.name : 'Choose Excel File'}
+            <input
+              type="file"
+              hidden
+              accept=".xlsx,.xls"
+              onChange={handleFileSelect}
+            />
+          </Button>
+
+          {importResult && (
+            <Alert severity="info">
+              <Typography variant="body2">
+                Created: {importResult.created_count} users<br />
+                Skipped: {importResult.skipped_count} users
+              </Typography>
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => {
+              setImportDialogOpen(false);
+              setSelectedFile(null);
+              setImportResult(null);
+              setError('');
+            }} 
+            disabled={importing}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleImport}
+            variant="contained"
+            disabled={!selectedFile || importing}
+            startIcon={importing ? <CircularProgress size={20} /> : <UploadIcon />}
+          >
+            {importing ? 'Importing...' : 'Import'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -147,7 +147,7 @@ const ExcelView = ({ projectId, onTaskUpdate }) => {
         onTaskUpdate();
       }
       
-      // Close dialog after short delay
+      // Close dialog after short delay only on success, not on error
       setTimeout(() => {
         setImportDialogOpen(false);
         setSelectedFile(null);
@@ -157,6 +157,7 @@ const ExcelView = ({ projectId, onTaskUpdate }) => {
     } catch (err) {
       console.error('Import failed:', err);
       setError(err.response?.data?.error || 'Failed to import tasks');
+      // Don't auto-close on error - let user read and manually close
     } finally {
       setImporting(false);
     }
