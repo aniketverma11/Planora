@@ -57,7 +57,7 @@ Before you begin, ensure you have:
    ```
 3. **Add upstream remote**:
    ```bash
-   git remote add upstream https://github.com/aniket-verma-coforge/task-management.git
+   git remote add upstream https://github.com/aniketverma11/task-management.git
    ```
 
 ### Set Up Development Environment
@@ -530,7 +530,7 @@ describe('TaskCard', () => {
 
 If you have questions:
 
-1. Check existing [GitHub Discussions](https://github.com/aniket-verma-coforge/task-management/discussions)
+1. Check existing [GitHub Discussions](https://github.com/aniketverma11/task-management/discussions)
 2. Ask in our [Discord community](https://discord.gg/taskmanagement)
 3. Create a new discussion on GitHub
 

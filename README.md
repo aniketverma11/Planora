@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Task Management](https://img.shields.io/badge/Task-Management-blue?style=for-the-badge)
+![Task Management](https://img.shields.io/badge/planora-blue?style=for-the-badge)
 ![Django](https://img.shields.io/badge/Django-5.2.7-green?style=for-the-badge&logo=django)
 ![React](https://img.shields.io/badge/React-19.0.2-61DAFB?style=for-the-badge&logo=react)
 ![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)
@@ -313,8 +313,8 @@ Before you begin, ensure you have the following installed:
 #### **1. Clone the Repository**
 
 ```bash
-git clone https://github.com/aniket-verma-coforge/task-management.git
-cd task-management
+git clone https://github.com/aniketverma11/planora.git
+cd planora
 ```
 
 #### **2. Backend Setup**
@@ -630,7 +630,7 @@ Our system provides real-time visual feedback:
 ## 📁 Project Structure
 
 ```
-task-management/
+planora/
 │
 ├── 📂 frontend/                     # React frontend application
 │   ├── 📂 build/                    # Production build (served by Django)
@@ -955,7 +955,7 @@ heroku run python manage.py createsuperuser
    
    # Clone repository
    git clone your-repo-url
-   cd task-management
+   cd planora
    
    # Set up virtual environment
    python3 -m venv env
@@ -1072,7 +1072,7 @@ We welcome contributions! Here's how you can help:
 1. **Fork the repository**
 2. **Clone your fork**
    ```bash
-   git clone https://github.com/your-username/task-management.git
+   git clone https://github.com/your-username/planora.git
    ```
 3. **Create a feature branch**
    ```bash
@@ -1143,7 +1143,7 @@ SOFTWARE.
 - 📧 **Email**: support@taskmanagement.com
 - 💬 **Discord**: [Join our community](https://discord.gg/taskmanagement)
 - 📖 **Documentation**: [Full documentation](https://docs.taskmanagement.com)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/aniket-verma-coforge/task-management/issues)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/aniketverma11/planora/issues)
 
 ### **FAQ**
 
@@ -1192,12 +1192,12 @@ Currently, we have a responsive web application that works well on mobile browse
 
 ## 📊 Project Stats
 
-![GitHub stars](https://img.shields.io/github/stars/aniket-verma-coforge/task-management?style=social)
-![GitHub forks](https://img.shields.io/github/forks/aniket-verma-coforge/task-management?style=social)
-![GitHub issues](https://img.shields.io/github/issues/aniket-verma-coforge/task-management)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/aniket-verma-coforge/task-management)
-![GitHub last commit](https://img.shields.io/github/last-commit/aniket-verma-coforge/task-management)
-![GitHub code size](https://img.shields.io/github/languages/code-size/aniket-verma-coforge/task-management)
+![GitHub stars](https://img.shields.io/github/stars/aniketverma11/planora?style=social)
+![GitHub forks](https://img.shields.io/github/forks/aniketverma11/planora?style=social)
+![GitHub issues](https://img.shields.io/github/issues/aniketverma11/planora)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/aniketverma11/planora)
+![GitHub last commit](https://img.shields.io/github/last-commit/aniketverma11/planora)
+![GitHub code size](https://img.shields.io/github/languages/code-size/aniketverma11/planora)
 
 ---
 
@@ -1232,6 +1232,6 @@ Currently, we have a responsive web application that works well on mobile browse
 
 **Made with ❤️ by the Task Management Team**
 
-[Report Bug](https://github.com/aniket-verma-coforge/task-management/issues) • [Request Feature](https://github.com/aniket-verma-coforge/task-management/issues)
+[Report Bug](https://github.com/aniketverma11/planora/issues) • [Request Feature](https://github.com/aniketverma11/planora/issues)
 
 </div>

@@ -238,10 +238,10 @@ We use Semantic Versioning:
 
 ## Links
 
-- [Homepage](https://github.com/aniket-verma-coforge/task-management)
-- [Issue Tracker](https://github.com/aniket-verma-coforge/task-management/issues)
-- [Source Code](https://github.com/aniket-verma-coforge/task-management)
-- [Documentation](https://github.com/aniket-verma-coforge/task-management#readme)
+- [Homepage](https://github.com/aniketverma11/task-management)
+- [Issue Tracker](https://github.com/aniketverma11/task-management/issues)
+- [Source Code](https://github.com/aniketverma11/task-management)
+- [Documentation](https://github.com/aniketverma11/task-management#readme)
 
 ---
 
@@ -249,11 +249,11 @@ We use Semantic Versioning:
 
 Special thanks to all contributors who helped make this release possible!
 
-- [@aniket-verma-coforge](https://github.com/aniket-verma-coforge) - Project Lead & Core Developer
+- [@aniketverma11](https://github.com/aniketverma11) - Project Lead & Core Developer
 
 Want to see your name here? Check out our [Contributing Guidelines](CONTRIBUTING.md)!
 
 ---
 
-[Unreleased]: https://github.com/aniket-verma-coforge/task-management/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/aniket-verma-coforge/task-management/releases/tag/v1.0.0
+[Unreleased]: https://github.com/aniketverma11/task-management/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/aniketverma11/task-management/releases/tag/v1.0.0
